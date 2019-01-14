@@ -16,14 +16,4 @@ public class FileUtil {
 	public static boolean existFile(String path) {
 		return new File(path).exists();
 	}
-
-	public static boolean isDirectory(String path) {
-		return new File(path).isDirectory();
-	}
-
-	public static String getLocatedDir(String filepath) {
-		File file = new File(filepath);
-		if (!file.exists()) return null;
-		return file.getParent();
-	}
 }

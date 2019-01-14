@@ -1,6 +1,5 @@
 package depends.extractor;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Stack;
 
@@ -138,37 +137,31 @@ public abstract class HandlerContext {
 	public void foundExtends(String typeName) {
 		if (currentType()==null) {
 			System.out.println("error: type do not exist");
-			return ;
 		}
 		currentType().addExtends(typeName);
 	}
 
-	public void foundMixin(String moduleName) {
-		lastContainer().addMixin(moduleName);
-		
-	}
 
 	public void foundTypeParametes(String typeName) {
 		lastContainer().addTypeParameter(typeName);
 	}
 
 
-	public void foundVarDefinition(List<String> varNames, String type, List<String> typeArguments) {
+	public void foundVarDefinition(List<String> varNames, String type) {
 		for (String varName : varNames) {
-			foundVarDefintion(varName,type,typeArguments);
+			foundVarDefintion(varName,type);
 		}
 	}
 
 
-	public void foundVarDefintion(String varName, String type, List<String> typeArguments) {
+	public void foundVarDefintion(String varName, String type) {
 		VarEntity var = new VarEntity(varName, type, lastContainer(), idGenerator.generateId());
-		var.addTypeParameter(typeArguments);
 		lastContainer().addVar(var);		
 	}
 
 	public void foundEnumConstDefinition(String varName) {
 		String type = lastContainer().getRawName();
-		foundVarDefintion(varName,type,new ArrayList<>());
+		foundVarDefintion(varName,type);
 	}
 	
 	protected Stack<Entity> entityStack = new Stack<Entity>();

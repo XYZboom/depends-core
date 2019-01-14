@@ -15,25 +15,36 @@ import depends.relations.Inferer;
  * ContainerEntity for example file, class, method, etc.
  * they could contain vars, functions, ecpressions, type parameters, etc.
  */
-public abstract class ContainerEntity extends DecoratedEntity {
+public abstract class ContainerEntity extends Entity {
 	private static final Logger logger = LoggerFactory.getLogger(ContainerEntity.class);
 
 	private ArrayList<VarEntity> vars;
 	private ArrayList<FunctionEntity> functions;
 	private HashMap<Object, Expression> expressions;
-	private Collection<String> mixins;
-	private Collection<ContainerEntity> resolvedMixins;
+	private Collection<String> typeParameters; // Generic type parameters like <T>, <String>, <? extends Object>
+	private Collection<String> annotations = new ArrayList<>();
+	private Collection<TypeEntity> resolvedTypeParameters = new ArrayList<>();
+	private Collection<TypeEntity> resolvedAnnotations = new ArrayList<>();
 
 	public ContainerEntity(String rawName, Entity parent, Integer id) {
 		super(rawName, parent, id);
 		vars = new ArrayList<>();
 		functions = new ArrayList<>();
-		mixins = new ArrayList<>();
-		resolvedMixins = new ArrayList<>();
 		expressions = new HashMap<>();
+		typeParameters = new ArrayList<>();
 	}
 	
-
+	public void addAnnotation(String name) {
+		this.annotations.add(name);
+	}
+	
+	public void addTypeParameter(String typeName) {
+		this.typeParameters.add(typeName);
+	}
+	
+	public void addTypeParameter(List<String> parameters) {
+		this.typeParameters.addAll(parameters);
+	}
 
 	public void addVar(VarEntity var) {
 		if (logger.isDebugEnabled()) {
@@ -62,34 +73,41 @@ public abstract class ContainerEntity extends DecoratedEntity {
 		expressions.put(key, expression);
 	}
 
-	
+	/**
+	 * A common utility function used to transfer the identifiers 
+	 * to types.
+	 * @param inferer - the inferer object 
+	 * @param identifiers - the identifiers will be translated
+	 * @return The translated Types
+	 */
+	protected Collection<TypeEntity> identiferToTypes(Inferer inferer, Collection<String> identifiers) {
+		ArrayList<TypeEntity> r = new ArrayList<>();
+		for (String typeParameter : identifiers) {
+			TypeEntity typeEntity = inferer.inferTypeFromName(this, typeParameter);
+			if (typeEntity==null) {
+				if (((ContainerEntity)getParent()).isGenericTypeParameter(typeParameter)) {
+					typeEntity = Inferer.genericParameterType;
+				}
+			}
+			if (typeEntity != null)
+				r.add(typeEntity);
+		}
+		return r;
+	}
 
 	/**
 	 * For all data in the class, infer their types.
 	 * Should be override in sub-classes 
 	 */
 	public void inferLocalLevelEntities(Inferer inferer) {
-		super.inferLocalLevelEntities(inferer);
+		resolvedTypeParameters = identiferToTypes(inferer, typeParameters);
+		resolvedAnnotations = identiferToTypes(inferer, annotations);
 		for (VarEntity var : this.vars) {
 			var.inferLocalLevelEntities(inferer);
 		}
 		for (FunctionEntity func:this.functions) {
 			func.inferLocalLevelEntities(inferer);
 		}
-		resolvedMixins = identiferToContainerEntity(inferer, mixins);
-	}
-
-	private Collection<ContainerEntity> identiferToContainerEntity(Inferer inferer, Collection<String> identifiers) {
-		ArrayList<ContainerEntity> r = new ArrayList<>();
-		for (String identifier : identifiers) {
-			Entity entity = inferer.resolveName(this, identifier, true);
-			if (entity==null) {
-				continue;
-			}
-			if (entity instanceof ContainerEntity)
-				r.add((ContainerEntity)entity);
-		}
-		return r;
 	}
 
 	/**
@@ -139,6 +157,14 @@ public abstract class ContainerEntity extends DecoratedEntity {
 
 	
 
+	public Collection<TypeEntity> getResolvedTypeParameters() {
+		return resolvedTypeParameters;
+	}
+
+
+	public Collection<TypeEntity> getResolvedAnnotations() {
+		return resolvedAnnotations;
+	}
 
 
 	public String dumpExpressions() {
@@ -150,6 +176,13 @@ public abstract class ContainerEntity extends DecoratedEntity {
 	}
 	
 
+
+	public boolean isGenericTypeParameter(String rawType) {
+		if (this.typeParameters.contains(rawType)) return true;
+		if (this.getParent()==null || !(this.getParent() instanceof ContainerEntity))
+			return false;
+		return ((ContainerEntity)getParent()).isGenericTypeParameter(rawType);
+	}
 
 	protected FunctionEntity lookupFunctionLocally(String functionName) {
 		for (FunctionEntity func : getFunctions()) {
@@ -198,11 +231,5 @@ public abstract class ContainerEntity extends DecoratedEntity {
 				return var;
 		}
 		return null;
-	}
-
-
-
-	public void addMixin(String moduleName) {
-		mixins.add(moduleName);
 	}
 }
