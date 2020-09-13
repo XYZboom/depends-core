@@ -28,8 +28,6 @@ import depends.extractor.AbstractLangProcessor;
 import depends.extractor.LangProcessorRegistration;
 
 public class LangRegister {
-
-
 	public LangRegister() {
 		add (new depends.extractor.java.JavaProcessor());
 		add (new depends.extractor.cpp.CppProcessor());
@@ -37,6 +35,7 @@ public class LangRegister {
 		add (new depends.extractor.pom.PomProcessor());
 		add (new depends.extractor.kotlin.KotlinProcessor());
 		add (new depends.extractor.python.union.PythonProcessor());
+		add (new depends.extractor.golang.GoProcessor());
 	}
 	
 	public void register() {
