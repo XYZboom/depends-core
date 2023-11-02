@@ -59,8 +59,7 @@ public class Main {
 
 	public static void main(String[] args) {
 		try {
-			LangRegister langRegister = new LangRegister();
-			langRegister.register();
+			LangRegister.register();
 			DependsCommand appArgs = CommandLine.populateCommand(new DependsCommand(), args);
 			if (appArgs.help) {
 				CommandLine.usage(new DependsCommand(), System.out);
@@ -181,10 +180,6 @@ public class Main {
 				dependencyGenerator = new FileDependencyGenerator();
 			else if (app.getGranularity()[i].equals("structure"))
 				dependencyGenerator = new StructureDependencyGenerator();
-			else if (app.getGranularity()[i].equals(ClassDependencyGenerator.TYPE)
-					&& "kotlin".equals(app.getLang())) {
-				dependencyGenerator = new ClassDependencyGenerator();
-			}
 
 			dependencyGenerators.add(dependencyGenerator);
 			if (app.isStripLeadingPath() ||

@@ -1,10 +1,9 @@
 package depends.matrix;
 
-import static org.junit.Assert.*;
-
+import depends.matrix.transform.MatrixLevelReducer;
 import org.junit.Test;
 
-import depends.matrix.transform.MatrixLevelReducer;
+import static org.junit.Assert.*;
 
 public class MatrixLevelReducerTest {
 

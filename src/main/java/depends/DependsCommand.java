@@ -45,7 +45,7 @@ public class DependsCommand {
 		public SupportedTypes() { super( DependencyType.allDependencies()); }
 	}
 	
-	@Parameters(index = "0", completionCandidates = DependsCommand.SupportedLangs.class, description = "The lanauge of project files: [${COMPLETION-CANDIDATES}]")
+	@Parameters(index = "0", completionCandidates = SupportedLangs.class, description = "The lanauge of project files: [${COMPLETION-CANDIDATES}]")
     private String lang;
 	@Parameters(index = "1", description = "The directory to be analyzed")
     private String src;
@@ -74,7 +74,7 @@ public class DependsCommand {
 	private boolean detail = false;
 	@Option(names = {"--auto-stub"}, description = "create stub files for unsolved symbols (exprimental feature, only for java)")
 	private boolean autoStub = false;	
-	@Option(names = {"--type-filter"},split=",",  completionCandidates = DependsCommand.SupportedTypes.class, description = "only filter the listed dependency types[${COMPLETION-CANDIDATES}]")
+	@Option(names = {"--type-filter"},split=",",  completionCandidates = SupportedTypes.class, description = "only filter the listed dependency types[${COMPLETION-CANDIDATES}]")
     private String[] typeFilter=new String[]{};
 	@Option(names = {"--external-deps"}, description = "Output external dependencies")
 	private boolean outputExternalDependencies = false;	

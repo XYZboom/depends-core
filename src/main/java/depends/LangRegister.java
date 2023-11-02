@@ -27,23 +27,20 @@ package depends;
 import depends.extractor.AbstractLangProcessor;
 import depends.extractor.LangProcessorRegistration;
 
-public class LangRegister {
-	public LangRegister() {
-		add (new depends.extractor.java.JavaProcessor());
-		add (new depends.extractor.cpp.CppProcessor());
-		add (new depends.extractor.ruby.RubyProcessor());
-		add (new depends.extractor.pom.PomProcessor());
-		add (new depends.extractor.kotlin.KotlinProcessor());
-		add (new depends.extractor.python.union.PythonProcessor());
-		add (new depends.extractor.golang.GoProcessor());
-	}
-	
-	public void register() {
+import java.util.Iterator;
+import java.util.ServiceLoader;
 
+public class LangRegister {
+	public static void register() {
+		ServiceLoader<AbstractLangProcessor> langProcessorServiceLoader
+				= ServiceLoader.load(AbstractLangProcessor.class);
+		for (AbstractLangProcessor langProcessor : langProcessorServiceLoader) {
+			LangProcessorRegistration.getRegistry().register(langProcessor);
+		}
 	}
-	
-	private void add(AbstractLangProcessor langProcessor) {
-		LangProcessorRegistration.getRegistry().register(langProcessor);
+
+	private LangRegister() {
+		throw new IllegalCallerException("LangRegister should never be created! Use LangRegister.register to register.");
 	}
 }
 

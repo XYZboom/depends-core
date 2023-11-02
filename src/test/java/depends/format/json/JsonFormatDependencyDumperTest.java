@@ -1,6 +1,7 @@
 package depends.format.json;
 
 import depends.format.excel.ExcelXlsxFormatDependencyDumper;
+import depends.format.json.JsonFormatDependencyDumper;
 import depends.matrix.core.DependencyMatrix;
 import org.junit.Before;
 import org.junit.Ignore;

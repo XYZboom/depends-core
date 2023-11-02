@@ -1,8 +1,8 @@
 package depends.addons;
 
-import java.util.ArrayList;
-
 import org.junit.Test;
+
+import java.util.ArrayList;
 
 public class DV8MappingFileBuilderTest {
 

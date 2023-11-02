@@ -209,8 +209,8 @@ public class RelationCounter {
 		for (TypeEntity interfaceType : type.getImplementedTypes()) {
 			type.addRelation(buildRelation(type, DependencyType.IMPLEMENT, interfaceType));
 		}
-		if (type instanceof KotlinTypeEntity) {
-			TypeEntity delegateProvider = ((KotlinTypeEntity) type).getDelegateProviderType();
+		if (type instanceof IDelegateProviderType delegateProviderType) {
+			TypeEntity delegateProvider = delegateProviderType.getDelegateProviderType();
 			if (delegateProvider != null) {
 				type.addRelation(buildRelation(type, DependencyType.DELEGATE, delegateProvider));
 			}
