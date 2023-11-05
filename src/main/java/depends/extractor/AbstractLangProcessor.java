@@ -29,6 +29,7 @@ import depends.entity.FileEntity;
 import depends.entity.repo.BuiltInType;
 import depends.entity.repo.EntityRepo;
 import depends.entity.repo.InMemoryEntityRepo;
+import depends.relations.BindingResolver;
 import depends.relations.ImportLookupStrategy;
 import depends.relations.IBindingResolver;
 import multilang.depends.util.file.FileTraversal;
@@ -82,6 +83,13 @@ abstract public class AbstractLangProcessor {
 	 * @return
 	 */
 	public abstract FileParser createFileParser();
+
+	public IBindingResolver createBindingResolver(
+			boolean isCollectUnsolvedBindings,
+			boolean isDuckTypingDeduce
+	) {
+		return new BindingResolver(this, isCollectUnsolvedBindings, isDuckTypingDeduce);
+	}
 
 	public IBindingResolver bindingResolver;
 	protected EntityRepo entityRepo;

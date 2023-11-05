@@ -5,7 +5,7 @@ plugins {
 }
 
 group = "cn.emergentdesign.se"
-version = "0.9.7-SNAPSHOT"
+version = "0.9.8-SNAPSHOT"
 
 java {
     sourceCompatibility = JavaVersion.VERSION_17
@@ -15,7 +15,7 @@ java {
 publishing {
     repositories {
         maven {
-            url = uri("http://47.115.213.131:8080/repository/alex-release/")
+            url = uri("http://47.115.213.131:8080/repository/alex-snapshot/")
             credentials {
                 username = properties["maven-username"].toString()
                 password = properties["maven-password"].toString()
@@ -27,9 +27,22 @@ publishing {
         create<MavenPublication>("maven") {
             groupId = "cn.emergentdesign.se"
             artifactId = "depends-core"
-            version = "0.9.7"
+            version = "0.9.8-SNAPSHOT"
 
             from(components["java"])
+        }
+        create<MavenPublication>("maven-source") {
+            groupId = "cn.emergentdesign.se"
+            artifactId = "depends-core"
+            version = "0.9.8-SNAPSHOT"
+
+            // 配置要上传的源码
+            artifact(tasks.register<Jar>("sourcesJar") {
+                from(sourceSets.main.get().allSource)
+                archiveClassifier.set("sources")
+            }) {
+                classifier = "sources"
+            }
         }
     }
 }
@@ -56,16 +69,4 @@ dependencies {
 
 tasks.getByName<Test>("test") {
     useJUnit()
-}
-
-tasks.withType<Jar> {
-    doLast {
-        val jarFiles = fileTree("$projectDir/jars") {
-            include("*.jar")
-        }
-        val jarFile = project.tasks.getByName<org.gradle.jvm.tasks.Jar>("jar").archiveFile.get().asFile
-        for (file in jarFiles) {
-            file.copyTo(File(jarFile.parentFile, file.name), true)
-        }
-    }
 }

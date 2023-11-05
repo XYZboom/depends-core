@@ -33,7 +33,6 @@ import depends.format.DependencyDumper;
 import depends.format.detail.UnsolvedSymbolDumper;
 import depends.generator.*;
 import depends.matrix.core.DependencyMatrix;
-import depends.relations.BindingResolver;
 import depends.relations.IBindingResolver;
 import depends.relations.RelationCounter;
 import multilang.depends.util.file.FileUtil;
@@ -110,7 +109,7 @@ public class Main {
 			return;
 		}
 
-		IBindingResolver bindingResolver = new BindingResolver(langProcessor, args.isOutputExternalDependencies(), args.isDuckTypingDeduce());
+		IBindingResolver bindingResolver = langProcessor.createBindingResolver(args.isOutputExternalDependencies(), args.isDuckTypingDeduce());
 
 		long startTime = System.currentTimeMillis();
 		//step1: build data
