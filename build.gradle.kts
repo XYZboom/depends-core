@@ -15,7 +15,7 @@ java {
 publishing {
     repositories {
         maven {
-            url = uri("http://47.115.213.131:8080/repository/alex-snapshot/")
+            url = uri("http://47.115.213.131:8080/repository/alex-snapshots/")
             credentials {
                 username = properties["maven-username"].toString()
                 password = properties["maven-password"].toString()
