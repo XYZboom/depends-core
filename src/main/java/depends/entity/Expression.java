@@ -30,6 +30,7 @@ import depends.relations.IBindingResolver;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Expression
@@ -162,18 +163,24 @@ public class Expression implements Serializable {
 
 
 	/**
-	 * deduce type of parent based on child's type
-	 *
+	 * deduce type of parent based on child's type.
+	 * <p>For programming languages like kotlin or C #,
+	 * there is a syntax feature that allows for adding
+	 * syntactically equivalent member functions without
+	 * modifying the class itself. Therefore, for type
+	 * inference of the parent expression of an expression,
+	 * it is necessary to search for these extension functions
+	 * (or extension properties)</p>
 	 * @param bindingResolver
 	 */
-	private void deduceTheParentType(IBindingResolver bindingResolver) {
+	protected void deduceTheParentType(IBindingResolver bindingResolver) {
 		if (this.type == null) return;
 		if (this.parent == null) return;
 		Expression parent = this.parent;
 		if (parent.type != null) return;
 		if (!parent.deriveTypeFromChild) return;
 		//parent's type depends on first child's type
-		if (parent.deduceTypeBasedId != this.id) return;
+		if (!Objects.equals(parent.deduceTypeBasedId, this.id)) return;
 
 		//if child is a built-in/external type, then parent must also a built-in/external type
 		if (this.type.equals(TypeEntity.buildInType)) {
@@ -259,8 +266,6 @@ public class Expression implements Serializable {
 
 	/**
 	 * remember the functions depends on the expression type
-	 *
-	 * @param var
 	 */
 	public void addDeducedTypeFunction(FunctionEntity function) {
 		this.deducedTypeFunctions.add(function);
