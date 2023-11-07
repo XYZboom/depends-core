@@ -159,17 +159,32 @@ public abstract class Entity {
 	}
 
 	/**
-	 * Get ancestor of type.  
+	 * Get ancestor of type.
 	 * @param classType
 	 * @return null (if not exist) or the type
 	 */
 	public Entity getAncestorOfType(@SuppressWarnings("rawtypes") Class classType) {
+		return getAncestorOfType(classType, false);
+	}
+
+	/**
+	 * Get ancestor of type.
+	 *
+	 * @param classType
+	 * @param allowSubclass
+	 * @return null (if not exist) or the type
+	 */
+	public Entity getAncestorOfType(@SuppressWarnings("rawtypes") Class classType, boolean allowSubclass) {
 		Entity fromEntity = this;
 		while(fromEntity!=null) {
-			if (fromEntity.getClass().equals(classType))
+			if (!allowSubclass && fromEntity.getClass().equals(classType))
 				return fromEntity;
 			if (fromEntity.getParent()==null) return null;
 			fromEntity = fromEntity.getParent();
+			// never return this
+			if (allowSubclass && classType.isInstance(fromEntity)) {
+				return fromEntity;
+			}
 		}
 		return null;
 	}

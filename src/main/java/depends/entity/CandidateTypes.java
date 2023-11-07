@@ -285,7 +285,7 @@ public class CandidateTypes extends TypeEntity {
 
 	
 	@Override
-	public Entity getAncestorOfType(@SuppressWarnings("rawtypes") Class classType) {
+	public Entity getAncestorOfType(@SuppressWarnings("rawtypes") Class classType, boolean allowSubclass) {
 		return null;
 	}
 
