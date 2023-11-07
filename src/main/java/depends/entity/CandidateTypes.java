@@ -283,12 +283,6 @@ public class CandidateTypes extends TypeEntity {
 		return super.getQualifiedName(overrideFileWithPackage);
 	}
 
-	
-	@Override
-	public Entity getAncestorOfType(@SuppressWarnings("rawtypes") Class classType, boolean allowSubclass) {
-		return null;
-	}
-
 	@Override
 	public void inferEntities(IBindingResolver bindingResolver) {
 		System.err.println("error: inferEntities should not been invoked");
