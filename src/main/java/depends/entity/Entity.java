@@ -166,7 +166,7 @@ public abstract class Entity {
 	public Entity getAncestorOfType(@SuppressWarnings("rawtypes") Class classType) {
 		Entity fromEntity = this;
 		while(fromEntity!=null) {
-			if (classType.isInstance(fromEntity))
+			if (fromEntity.getClass().equals(classType))
 				return fromEntity;
 			if (fromEntity.getParent()==null) return null;
 			fromEntity = fromEntity.getParent();
