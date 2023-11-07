@@ -51,9 +51,9 @@ public class Expression implements Serializable {
 	private boolean isThrow = false;
 	private boolean isStatement = false; //statement is only used for return type calcuation in some langs such as ruby
 	//they will not be treat as real expressions in case of relation calculation
-	private boolean deriveTypeFromChild = true;
+	protected boolean deriveTypeFromChild = true;
 
-	private Integer deduceTypeBasedId; //by default, parent expression type determined by most left child
+	protected Integer deduceTypeBasedId; //by default, parent expression type determined by most left child
 
 	private Integer parentId = -1;
 	private transient Expression parent;
@@ -230,7 +230,7 @@ public class Expression implements Serializable {
 	 * @param bindingResolver
 	 * @param funcs
 	 */
-	private void setReferredFunctions(IBindingResolver bindingResolver, List<Entity> funcs) {
+	protected void setReferredFunctions(IBindingResolver bindingResolver, List<Entity> funcs) {
 		if (funcs == null || funcs.size() == 0) return;
 		Entity func = funcs.get(0);
 		if (funcs.size() == 1) {
@@ -247,7 +247,7 @@ public class Expression implements Serializable {
 		setReferredEntity(m);
 	}
 
-	private void setReferredEntity(Entity referredEntity) {
+	protected void setReferredEntity(Entity referredEntity) {
 		this.referredEntity = referredEntity;
 		if (this.referredEntity != null) {
 			this.referredEntityId = referredEntity.getId();
