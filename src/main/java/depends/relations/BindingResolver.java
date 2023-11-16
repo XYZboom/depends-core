@@ -290,6 +290,11 @@ public class BindingResolver implements IBindingResolver{
 	}
 
 	@Override
+	public boolean isDelayHandleCreateExpression() {
+		return false;
+	}
+
+	@Override
 	public EntityRepo getRepo() {
 		return repo;
 	}

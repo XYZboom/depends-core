@@ -56,6 +56,10 @@ public class RelationCounter {
 	private void computeRelationOf(Entity entity) {
 		if (!entity.inScope())
 			return;
+		// 需要先推导表达式类型
+		if (entity instanceof ContainerEntity) {
+			computeContainerRelations((ContainerEntity) entity);
+		}
 		if (entity instanceof FileEntity) {
 			computeImports((FileEntity) entity);
 		} else if (entity instanceof FunctionEntity) {
@@ -63,14 +67,25 @@ public class RelationCounter {
 		} else if (entity instanceof TypeEntity) {
 			computeTypeRelations((TypeEntity) entity);
 		}
-		if (entity instanceof ContainerEntity) {
-			computeContainerRelations((ContainerEntity) entity);
-		}
 		entity.getChildren().forEach(this::computeRelationOf);
 	}
 
 
 	private void computeContainerRelations(ContainerEntity entity) {
+		// 由于部分表达式的类型确定后才能确定本地变量的类型，因此先做类型推导
+		entity.reloadExpression(repo);
+		if (!bindingResolver.isEagerExpressionResolve()) {
+			entity.resolveExpressions(bindingResolver);
+		}
+		for (Expression expression : entity.expressionList()) {
+			if (expression.isStatement()) {
+				continue;
+			}
+			Entity referredEntity = expression.getReferredEntity();
+			addRelationFromExpression(entity, expression, referredEntity, false);
+		}
+		entity.clearExpressions();
+
 		for (VarEntity var : entity.getVars()) {
 			if (var.getType() != null)
 				entity.addRelation(buildRelation(entity, DependencyType.CONTAIN, var.getType(), var.getLocation()));
@@ -87,19 +102,6 @@ public class RelationCounter {
 		for (ContainerEntity mixin : entity.getResolvedMixins()) {
 			entity.addRelation(buildRelation(entity, DependencyType.MIXIN, mixin));
 		}
-
-		entity.reloadExpression(repo);
-		if (!bindingResolver.isEagerExpressionResolve()) {
-			entity.resolveExpressions(bindingResolver);
-		}
-		for (Expression expression : entity.expressionList()) {
-			if (expression.isStatement()) {
-				continue;
-			}
-			Entity referredEntity = expression.getReferredEntity();
-			addRelationFromExpression(entity, expression, referredEntity, false);
-		}
-		entity.clearExpressions();
 	}
 
 

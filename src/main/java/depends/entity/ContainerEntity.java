@@ -28,6 +28,7 @@ import depends.entity.repo.EntityRepo;
 import depends.relations.IBindingResolver;
 import depends.relations.Relation;
 import multilang.depends.util.file.TemporaryFile;
+import org.apache.commons.codec.binary.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -205,7 +206,14 @@ public abstract class ContainerEntity extends DecoratedEntity {
 					}
 				}
 				if (entity != null) {
-					expression.setType(entity.getType(), entity, bindingResolver);
+					TypeEntity entityType = entity.getType();
+					if (bindingResolver.isDelayHandleCreateExpression() &&
+							entityType != null && expression.isCall()
+							&& StringUtils.equals(entityType.rawName.getName(), composedName)) {
+						// 检测到延迟处理则在此处进行Create类型设置
+						expression.setCreate(true);
+					}
+					expression.setType(entityType, entity, bindingResolver);
 					continue;
 				}
 				if (expression.isCall()) {

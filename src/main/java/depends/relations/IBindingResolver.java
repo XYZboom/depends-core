@@ -64,5 +64,11 @@ public interface IBindingResolver {
 
     boolean isEagerExpressionResolve();
 
+    /**
+     * @return true if handle create expression after type bindings are resolved
+     * <p>如果延迟Create类型的表达式到类型处理结束后，则返回true<p/>
+     */
+    boolean isDelayHandleCreateExpression();
+
     EntityRepo getRepo();
 }
