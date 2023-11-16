@@ -34,6 +34,7 @@ import depends.relations.ImportLookupStrategy;
 import depends.relations.IBindingResolver;
 import multilang.depends.util.file.FileTraversal;
 import multilang.depends.util.file.FileUtil;
+import org.antlr.v4.runtime.tree.ParseTreeListener;
 import org.codehaus.plexus.util.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -98,6 +99,8 @@ abstract public class AbstractLangProcessor {
 	private Set<UnsolvedBindings> potentialExternalDependencies;
 	private List<String> includePaths;
 	private static Logger logger = LoggerFactory.getLogger(AbstractLangProcessor.class);
+
+	protected ArrayList<ParseTreeListener> extraListeners = new ArrayList<>();
 	
 	public AbstractLangProcessor() {
 		entityRepo = new InMemoryEntityRepo();

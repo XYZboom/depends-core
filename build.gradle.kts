@@ -56,6 +56,7 @@ repositories {
 }
 
 dependencies {
+    implementation("org.antlr:antlr4-runtime:4.13.1")
     implementation("cn.emergentdesign.se:utils:0.1.1")
     implementation("javax.xml.bind:jaxb-api:2.3.1")
     implementation("org.apache.poi:poi:5.2.2")

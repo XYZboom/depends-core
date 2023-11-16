@@ -27,8 +27,11 @@ package depends.extractor;
 import depends.entity.FileEntity;
 import depends.entity.repo.EntityRepo;
 import multilang.depends.util.file.FileUtil;
+import org.antlr.v4.runtime.tree.ParseTreeListener;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 public abstract class FileParser {
 	protected EntityRepo entityRepo;
@@ -38,7 +41,18 @@ public abstract class FileParser {
 	 * @param filePath
 	 * @throws IOException
 	 */
-	public final void parse(String filePath) throws IOException{
+	public final void parse(String filePath) throws IOException {
+		parse(filePath, new ArrayList<>());
+	}
+
+	/**
+	 * parse files
+	 *
+	 * @param filePath
+	 * @param extraListeners
+	 * @throws IOException
+	 */
+	public final void parse(String filePath, List<ParseTreeListener> extraListeners) throws IOException{
 		filePath = FileUtil.uniqFilePath(filePath);
 		/* If file already exist, skip it */
 		FileEntity fileEntity = entityRepo.getFileEntity(filePath);
@@ -58,7 +72,20 @@ public abstract class FileParser {
 	 * @param filePath - it is alread unique file path name
 	 * @throws IOException
 	 */
-	protected abstract void parseFile(String filePath) throws IOException;
+	protected void parseFile(String filePath) throws IOException {
+		parseFile(filePath, new ArrayList<>());
+	}
+
+	/**
+	 * The actual file parser - it should put parsed entities into entityRepo;
+	 *
+	 * @param filePath       - it is alread unique file path name
+	 * @param extraListeners
+	 * @throws IOException
+	 */
+	protected void parseFile(String filePath, List<ParseTreeListener> extraListeners) throws IOException {
+		// empty method instead of abstract here to avoid disrupting compatibility
+	}
 
 	protected boolean isPhase2Files(String filePath){
 		return false;
