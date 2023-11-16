@@ -42,10 +42,7 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 abstract public class AbstractLangProcessor {
 
@@ -187,7 +184,7 @@ abstract public class AbstractLangProcessor {
 			if (fileParser.isPhase2Files(fileFullPath)){
 				phase2Files.add(fileFullPath);
 			}else {
-				fileParser.parse(fileFullPath);
+				fileParser.parse(fileFullPath, extraListeners);
 			}
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -251,5 +248,21 @@ abstract public class AbstractLangProcessor {
 	 *     implicit call (for example polymorphic in cpp)
 	 * @return
 	 */
-	public boolean supportCallAsImpl(){return false;};
+	public boolean supportCallAsImpl(){return false;}
+
+	public boolean addExtraListener(ParseTreeListener listener) {
+		return extraListeners.add(listener);
+	}
+
+	public boolean removeExtraListener(ParseTreeListener listener) {
+		return extraListeners.remove(listener);
+	}
+
+	public void clearExtraListeners() {
+		extraListeners.clear();
+	}
+
+	public boolean addExtraListeners(Collection<ParseTreeListener> listeners) {
+		return extraListeners.addAll(listeners);
+	}
 }

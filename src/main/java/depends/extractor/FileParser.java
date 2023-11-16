@@ -28,6 +28,7 @@ import depends.entity.FileEntity;
 import depends.entity.repo.EntityRepo;
 import multilang.depends.util.file.FileUtil;
 import org.antlr.v4.runtime.tree.ParseTreeListener;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -72,7 +73,7 @@ public abstract class FileParser {
 	 * @param filePath - it is alread unique file path name
 	 * @throws IOException
 	 */
-	protected void parseFile(String filePath) throws IOException {
+	protected void parseFile(@NotNull String filePath) throws IOException {
 		parseFile(filePath, new ArrayList<>());
 	}
 
@@ -83,7 +84,7 @@ public abstract class FileParser {
 	 * @param extraListeners
 	 * @throws IOException
 	 */
-	protected void parseFile(String filePath, List<ParseTreeListener> extraListeners) throws IOException {
+	protected void parseFile(@NotNull String filePath, @NotNull List<ParseTreeListener> extraListeners) throws IOException {
 		// empty method instead of abstract here to avoid disrupting compatibility
 	}
 
