@@ -301,12 +301,19 @@ public class Expression implements Serializable {
 		this.identifier = GenericName.build(name);
 	}
 
+	/**
+	 * if want set identifier to null, use {@link Expression#setIdentifierToNull()}
+	 */
 	public void setIdentifier(GenericName name) {
 		if (name == null) return;
 		if (!validName(name.getName())) {
 			return;
 		}
 		this.identifier = name;
+	}
+
+	public void setIdentifierToNull() {
+		this.identifier = null;
 	}
 
 	public void setRawType(GenericName name) {

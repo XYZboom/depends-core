@@ -212,6 +212,7 @@ public abstract class ContainerEntity extends DecoratedEntity {
 							&& StringUtils.equals(entityType.rawName.getName(), composedName)) {
 						// 检测到延迟处理则在此处进行Create类型设置
 						expression.setCreate(true);
+						expression.setCall(false);
 					}
 					expression.setType(entityType, entity, bindingResolver);
 					continue;
