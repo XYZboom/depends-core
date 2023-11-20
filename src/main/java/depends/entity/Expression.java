@@ -71,6 +71,15 @@ public class Expression implements Serializable {
 	private Location location = new Location();
 	//for leaf, it equals to referredEntity.getType. otherwise, depends on child's type strategy
 
+	private transient ContainerEntity container;
+
+	public ContainerEntity getContainer() {
+		return container;
+	}
+
+	public void setContainer(ContainerEntity container) {
+		this.container = container;
+	}
 	/*
 	 * */
 
@@ -171,6 +180,7 @@ public class Expression implements Serializable {
 	 * inference of the parent expression of an expression,
 	 * it is necessary to search for these extension functions
 	 * (or extension properties)</p>
+	 *
 	 * @param bindingResolver
 	 */
 	protected void deduceTheParentType(IBindingResolver bindingResolver) {
@@ -196,6 +206,13 @@ public class Expression implements Serializable {
 		else if (parent.isDot) {
 			if (parent.isCall()) {
 				List<Entity> funcs = this.getType().lookupFunctionInVisibleScope(parent.identifier);
+				if (getContainer() != null) {
+					FunctionEntity functionEntity = getContainer().lookupExtensionFunctionInVisibleScope(
+							getType(), parent.identifier);
+					if (functionEntity != null) {
+						funcs.add(functionEntity);
+					}
+				}
 				parent.setReferredFunctions(bindingResolver, funcs);
 			} else {
 				Entity var = this.getType().lookupVarInVisibleScope(parent.identifier);
