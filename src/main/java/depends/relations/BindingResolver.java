@@ -295,6 +295,11 @@ public class BindingResolver implements IBindingResolver{
 	}
 
 	@Override
+	public boolean allowExtensions() {
+		return false;
+	}
+
+	@Override
 	public EntityRepo getRepo() {
 		return repo;
 	}

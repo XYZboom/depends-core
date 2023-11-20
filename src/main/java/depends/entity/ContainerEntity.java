@@ -29,6 +29,8 @@ import depends.relations.IBindingResolver;
 import depends.relations.Relation;
 import multilang.depends.util.file.TemporaryFile;
 import org.apache.commons.codec.binary.StringUtils;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,7 +42,7 @@ import java.util.*;
  * ContainerEntity for example file, class, method, etc. they could contain
  * vars, functions, ecpressions, type parameters, etc.
  */
-public abstract class ContainerEntity extends DecoratedEntity {
+public abstract class ContainerEntity extends DecoratedEntity implements IExtensionContainer {
 	private static final Logger logger = LoggerFactory.getLogger(ContainerEntity.class);
 
 	private ArrayList<VarEntity> vars;
@@ -339,6 +341,35 @@ public abstract class ContainerEntity extends DecoratedEntity {
 			}
 		}
 		return null;
+	}
+
+	@Nullable
+	@Override
+	public FunctionEntity lookupExtensionFunctionInVisibleScope(@NotNull TypeEntity type, @NotNull GenericName genericName) {
+		List<Entity> functions = lookupFunctionInVisibleScope(genericName);
+		if (functions == null)
+			return null;
+		ArrayList<FunctionEntity> currentTypeFunc = new ArrayList<>();
+		ArrayList<FunctionEntity> nonTypeFunc = new ArrayList<>();
+		for (Entity entity : functions) {
+			if (!(entity instanceof FunctionEntity function)) continue;
+			if (!function.isExtension()) continue;
+			ArrayList<VarEntity> parameters = function.getParameters();
+			if (parameters == null || parameters.isEmpty()) continue;
+			VarEntity firstParameter = parameters.get(0);
+			if (firstParameter == null) continue;
+			TypeEntity parameterType = firstParameter.getType();
+			if (parameterType == null) continue;
+			if (parameterType.equals(type)) {
+				currentTypeFunc.add(function);
+			} else {
+				nonTypeFunc.add(function);
+			}
+		}
+		if (!currentTypeFunc.isEmpty()) {
+			return currentTypeFunc.get(0);
+		}
+		return getNearest(nonTypeFunc);
 	}
 
 	/**

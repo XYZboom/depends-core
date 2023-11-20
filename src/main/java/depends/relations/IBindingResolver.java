@@ -70,5 +70,7 @@ public interface IBindingResolver {
      */
     boolean isDelayHandleCreateExpression();
 
+    boolean allowExtensions();
+
     EntityRepo getRepo();
 }

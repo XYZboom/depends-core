@@ -26,6 +26,7 @@ package depends.entity;
 
 import depends.relations.IBindingResolver;
 import depends.relations.Relation;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -222,6 +223,7 @@ public class CandidateTypes extends TypeEntity {
 		return super.getRawName();
 	}
 
+	@NotNull
 	@Override
 	public Integer getId() {
 		return super.getId();

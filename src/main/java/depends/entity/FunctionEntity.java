@@ -32,10 +32,20 @@ import java.util.List;
 
 public class FunctionEntity extends ContainerEntity{
 	private List<GenericName> returnTypeIdentifiers = new ArrayList<>();
-	Collection<VarEntity> parameters;
+	ArrayList<VarEntity> parameters;
     Collection<GenericName> throwTypesIdentifiers = new ArrayList<>(); 
 	private Collection<Entity> returnTypes = new ArrayList<>();
 	private Collection<Entity> throwTypes = new ArrayList<>();
+	private boolean isExtension = false;
+
+	public boolean isExtension() {
+		return isExtension;
+	}
+
+	public void setExtension(boolean extension) {
+		isExtension = extension;
+	}
+
 	public FunctionEntity() {
 		this.parameters = new ArrayList<>();
 	}
@@ -106,7 +116,7 @@ public class FunctionEntity extends ContainerEntity{
 	}
 
 	
-	public Collection<VarEntity> getParameters() {
+	public ArrayList<VarEntity> getParameters() {
 		return parameters;
 	}
 	public Collection<Entity> getThrowTypes() {
