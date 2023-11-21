@@ -63,7 +63,7 @@ public abstract class FileParser {
 				fileEntity.setInProjectScope(true);
 		}else {
 			System.out.println("parsing " + filePath + "...");
-			parseFile(filePath);
+			parseFile(filePath, extraListeners);
 			entityRepo.completeFile(filePath);
 		}
 	}
