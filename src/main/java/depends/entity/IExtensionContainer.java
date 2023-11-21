@@ -6,6 +6,7 @@ import org.jetbrains.annotations.Nullable;
 public interface IExtensionContainer {
     @NotNull Integer getId();
     @Nullable FunctionEntity lookupExtensionFunctionInVisibleScope(
-            @NotNull TypeEntity type, @NotNull GenericName genericName
+            @NotNull TypeEntity type, @NotNull GenericName genericName,
+            boolean searchPackage
     );
 }

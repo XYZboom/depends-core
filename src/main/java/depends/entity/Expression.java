@@ -208,7 +208,7 @@ public class Expression implements Serializable {
 				List<Entity> funcs = this.getType().lookupFunctionInVisibleScope(parent.identifier);
 				if (getContainer() != null) {
 					FunctionEntity functionEntity = getContainer().lookupExtensionFunctionInVisibleScope(
-							getType(), parent.identifier);
+							getType(), parent.identifier, true);
 					if (functionEntity != null) {
 						funcs.add(functionEntity);
 					}

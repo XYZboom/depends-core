@@ -37,6 +37,7 @@ import org.slf4j.LoggerFactory;
 import java.io.*;
 import java.lang.ref.WeakReference;
 import java.util.*;
+import java.util.function.Consumer;
 
 /**
  * ContainerEntity for example file, class, method, etc. they could contain
@@ -54,23 +55,23 @@ public abstract class ContainerEntity extends DecoratedEntity implements IExtens
 	private Collection<ContainerEntity> resolvedMixins;
 
 	private ArrayList<VarEntity> vars() {
-		if (vars==null)
+		if (vars == null)
 			vars = new ArrayList<>();
 		return this.vars;
 	}
-	
+
 	private Collection<GenericName> mixins() {
-		if (mixins==null)
+		if (mixins == null)
 			mixins = new ArrayList<>();
 		return this.mixins;
 	}
 
 	private ArrayList<FunctionEntity> functions() {
-		if (functions==null)
+		if (functions == null)
 			functions = new ArrayList<>();
 		return this.functions;
 	}
-	
+
 	public ContainerEntity() {
 	}
 
@@ -86,7 +87,7 @@ public abstract class ContainerEntity extends DecoratedEntity implements IExtens
 	}
 
 	public ArrayList<VarEntity> getVars() {
-		if (vars==null)
+		if (vars == null)
 			return new ArrayList<>();
 		return this.vars();
 	}
@@ -96,16 +97,16 @@ public abstract class ContainerEntity extends DecoratedEntity implements IExtens
 	}
 
 	public ArrayList<FunctionEntity> getFunctions() {
-		if (functions==null)
+		if (functions == null)
 			return new ArrayList<>();
 		return this.functions;
 	}
 
 	public HashMap<Object, Expression> expressions() {
-		if (expressionWeakReference==null)
+		if (expressionWeakReference == null)
 			expressionWeakReference = new WeakReference<>(new HashMap<>());
 		HashMap<Object, Expression> r = expressionWeakReference.get();
-		if (r==null) return new HashMap<>();
+		if (r == null) return new HashMap<>();
 		return r;
 	}
 
@@ -116,8 +117,9 @@ public abstract class ContainerEntity extends DecoratedEntity implements IExtens
 	}
 
 	public boolean containsExpression(Object key) {
-		return 	expressions().containsKey(key);
+		return expressions().containsKey(key);
 	}
+
 	/**
 	 * For all data in the class, infer their types. Should be override in
 	 * sub-classes
@@ -125,12 +127,12 @@ public abstract class ContainerEntity extends DecoratedEntity implements IExtens
 	public void inferLocalLevelEntities(IBindingResolver bindingResolver) {
 		super.inferLocalLevelEntities(bindingResolver);
 		for (VarEntity var : this.vars()) {
-			if (var.getParent()!=this) {
+			if (var.getParent() != this) {
 				var.inferLocalLevelEntities(bindingResolver);
 			}
 		}
 		for (FunctionEntity func : this.getFunctions()) {
-			if (func.getParent()!=this) {
+			if (func.getParent() != this) {
 				func.inferLocalLevelEntities(bindingResolver);
 			}
 		}
@@ -143,7 +145,7 @@ public abstract class ContainerEntity extends DecoratedEntity implements IExtens
 	}
 
 	private Collection<GenericName> getMixins() {
-		if (mixins==null)
+		if (mixins == null)
 			return new ArrayList<>();
 		return mixins;
 	}
@@ -164,17 +166,16 @@ public abstract class ContainerEntity extends DecoratedEntity implements IExtens
 
 	/**
 	 * Resolve all expression's type
-	 *
 	 */
 	public void resolveExpressions(IBindingResolver bindingResolver) {
 		if (this instanceof FunctionEntity) {
-			((FunctionEntity)this).linkReturnToLastExpression();
+			((FunctionEntity) this).linkReturnToLastExpression();
 		}
-		
-		if (expressionList==null) return;
-		if(expressionList.size()>10000) return;
-		
-		
+
+		if (expressionList == null) return;
+		if (expressionList.size() > 10000) return;
+
+
 		for (Expression expression : expressionList) {
 			// 1. if expression's type existed, break;
 			if (expression.getType() != null)
@@ -197,13 +198,13 @@ public abstract class ContainerEntity extends DecoratedEntity implements IExtens
 				Entity entity = bindingResolver.resolveName(this, expression.getIdentifier(), true);
 				String composedName = expression.getIdentifier().toString();
 				Expression theExpr = expression;
-				if (entity==null) {
-					while(theExpr.getParent()!=null && theExpr.getParent().isDot()) {
+				if (entity == null) {
+					while (theExpr.getParent() != null && theExpr.getParent().isDot()) {
 						theExpr = theExpr.getParent();
-						if (theExpr.getIdentifier()==null) break;
+						if (theExpr.getIdentifier() == null) break;
 						composedName = composedName + "." + theExpr.getIdentifier().toString();
 						entity = bindingResolver.resolveName(this, GenericName.build(composedName), true);
-						if (entity!=null)
+						if (entity != null)
 							break;
 					}
 				}
@@ -222,7 +223,7 @@ public abstract class ContainerEntity extends DecoratedEntity implements IExtens
 				if (expression.isCall()) {
 					List<Entity> funcs = this.lookupFunctionInVisibleScope(expression.getIdentifier());
 					if (funcs != null) {
-						for (Entity func:funcs) {
+						for (Entity func : funcs) {
 							expression.setType(func.getType(), func, bindingResolver);
 						}
 					}
@@ -236,41 +237,41 @@ public abstract class ContainerEntity extends DecoratedEntity implements IExtens
 			}
 		}
 	}
-	
+
 	public void cacheChildExpressions() {
 		cacheExpressions();
-		for (Entity child:getChildren()) {
+		for (Entity child : getChildren()) {
 			if (child instanceof ContainerEntity) {
-				((ContainerEntity)child).cacheChildExpressions();
+				((ContainerEntity) child).cacheChildExpressions();
 			}
 		}
 	}
 
 
 	public void cacheExpressions() {
-		if (expressionWeakReference==null) return;
-		if (expressionList==null) return;
+		if (expressionWeakReference == null) return;
+		if (expressionList == null) return;
 		this.expressions().clear();
 		this.expressionWeakReference.clear();
 		cacheExpressionListToFile();
 		this.expressionList.clear();
-		this.expressionList=null;
+		this.expressionList = null;
 		this.expressionList = new ArrayList<>();
 	}
 
 	public void clearExpressions() {
-		if (expressionWeakReference==null) return;
-		if (expressionList==null) return;
+		if (expressionWeakReference == null) return;
+		if (expressionList == null) return;
 		this.expressions().clear();
 		this.expressionWeakReference.clear();
 		this.expressionList.clear();
-		this.expressionList=null;
+		this.expressionList = null;
 		this.expressionList = new ArrayList<>();
 		this.expressionUseList = null;
 	}
-	
+
 	private void cacheExpressionListToFile() {
-		if (expressionCount ==0) return;
+		if (expressionCount == 0) return;
 		try {
 			FileOutputStream fileOut = new FileOutputStream(TemporaryFile.getInstance().exprPath(this.id));
 			ObjectOutputStream out = new ObjectOutputStream(fileOut);
@@ -284,27 +285,25 @@ public abstract class ContainerEntity extends DecoratedEntity implements IExtens
 
 	@SuppressWarnings("unchecked")
 	public void reloadExpression(EntityRepo repo) {
-		if (expressionCount ==0) return;
-		try
-	      {
-	         FileInputStream fileIn = new FileInputStream(TemporaryFile.getInstance().exprPath(this.id));
-	         ObjectInputStream in = new ObjectInputStream(fileIn);
-	         expressionList = (ArrayList<Expression>) in.readObject();
-	         if (expressionList==null) expressionList = new ArrayList<>();
-	         for (Expression expr:expressionList) {
-	        	 expr.reload(repo,expressionList);
-	         }
-	         in.close();
-	         fileIn.close();
-		  } catch (IOException | ClassNotFoundException i)
-	      {
-			  i.printStackTrace();
-	      }
+		if (expressionCount == 0) return;
+		try {
+			FileInputStream fileIn = new FileInputStream(TemporaryFile.getInstance().exprPath(this.id));
+			ObjectInputStream in = new ObjectInputStream(fileIn);
+			expressionList = (ArrayList<Expression>) in.readObject();
+			if (expressionList == null) expressionList = new ArrayList<>();
+			for (Expression expr : expressionList) {
+				expr.reload(repo, expressionList);
+			}
+			in.close();
+			fileIn.close();
+		} catch (IOException | ClassNotFoundException i) {
+			i.printStackTrace();
+		}
 	}
-	
+
 
 	public List<Expression> expressionList() {
-		if (expressionList==null) 
+		if (expressionList == null)
 			expressionList = new ArrayList<>();
 		return expressionList;
 	}
@@ -312,13 +311,13 @@ public abstract class ContainerEntity extends DecoratedEntity implements IExtens
 	public boolean containsExpression() {
 		return !expressions().isEmpty();
 	}
-	
+
 	/**
 	 * The entry point of lookup functions. It will treat multi-declare entities and
 	 * normal entity differently. - for multiDeclare entity, it means to lookup all
 	 * entities - for normal entity, it means to lookup entities from current scope
 	 * still root
-	 * 
+	 *
 	 * @param functionName
 	 * @return
 	 */
@@ -343,29 +342,80 @@ public abstract class ContainerEntity extends DecoratedEntity implements IExtens
 		return null;
 	}
 
+	public static void processVisibleEntitiesThatNameOf(
+			@NotNull Entity fromEntity,
+			@NotNull GenericName functionName,
+			boolean searchPackage,
+			@NotNull Consumer<Entity> consumer
+	) {
+		processVisibleEntitiesThatNameOf(fromEntity, functionName, searchPackage, consumer, new HashSet<>());
+	}
+
+	public static void processVisibleEntitiesThatNameOf(
+			@NotNull Entity fromEntity,
+			@NotNull GenericName functionName,
+			boolean searchPackage,
+			@NotNull Consumer<Entity> consumer,
+			Set<Entity> searched) {
+		if (searched.contains(fromEntity)) {
+			return;
+		}
+		while (fromEntity != null) {
+			if (searchPackage && fromEntity instanceof PackageEntity packageEntity) {
+				for (Entity entity : packageEntity.getChildren()) {
+					processVisibleEntitiesThatNameOf(entity, functionName, searchPackage, consumer, searched);
+					searched.add(entity);
+				}
+			}
+			if (fromEntity instanceof ContainerEntity container) {
+				for (FunctionEntity function : container.getFunctions()) {
+					if (Objects.equals(function.rawName, functionName)) {
+						consumer.accept(function);
+					}
+				}
+				for (VarEntity varEntity : container.getVars()) {
+					if (Objects.equals(varEntity.rawName, functionName)) {
+						consumer.accept(varEntity);
+					}
+				}
+			}
+			for (Entity child : fromEntity.getChildren()) {
+				if (child instanceof AliasEntity) {
+					if (child.getRawName().equals(functionName))
+						consumer.accept(child.getActualReferTo());
+				}
+			}
+			searched.add(fromEntity);
+			fromEntity = fromEntity.getParent();
+		}
+	}
+
 	@Nullable
 	@Override
-	public FunctionEntity lookupExtensionFunctionInVisibleScope(@NotNull TypeEntity type, @NotNull GenericName genericName) {
-		List<Entity> functions = lookupFunctionInVisibleScope(genericName);
-		if (functions == null)
-			return null;
+	public FunctionEntity lookupExtensionFunctionInVisibleScope(
+			@NotNull TypeEntity type, @NotNull GenericName genericName,
+			boolean searchPackage
+	) {
 		ArrayList<FunctionEntity> currentTypeFunc = new ArrayList<>();
 		ArrayList<FunctionEntity> nonTypeFunc = new ArrayList<>();
-		for (Entity entity : functions) {
-			if (!(entity instanceof FunctionEntity function)) continue;
-			if (!function.isExtension()) continue;
-			ArrayList<VarEntity> parameters = function.getParameters();
-			if (parameters == null || parameters.isEmpty()) continue;
-			VarEntity firstParameter = parameters.get(0);
-			if (firstParameter == null) continue;
-			TypeEntity parameterType = firstParameter.getType();
-			if (parameterType == null) continue;
-			if (parameterType.equals(type)) {
-				currentTypeFunc.add(function);
-			} else {
-				nonTypeFunc.add(function);
-			}
-		}
+		processVisibleEntitiesThatNameOf(this, genericName, true,
+				(entity) -> {
+					if (!(entity instanceof FunctionEntity function)) return;
+					if (!function.isExtension()) return;
+					ArrayList<VarEntity> parameters = function.getParameters();
+					if (parameters == null || parameters.isEmpty()) return;
+					VarEntity firstParameter = parameters.get(0);
+					if (firstParameter == null) return;
+					TypeEntity parameterType = firstParameter.getType();
+					if (parameterType == null) return;
+					if (parameterType.equals(type)) {
+						if (!currentTypeFunc.contains(function)) {
+							currentTypeFunc.add(function);
+						}
+					} else if (!nonTypeFunc.contains(function)) {
+						nonTypeFunc.add(function);
+					}
+				});
 		if (!currentTypeFunc.isEmpty()) {
 			return currentTypeFunc.get(0);
 		}
@@ -374,7 +424,7 @@ public abstract class ContainerEntity extends DecoratedEntity implements IExtens
 
 	/**
 	 * lookup function bottom up till the most outside container
-	 * 
+	 *
 	 * @param functionName
 	 * @param fromEntity
 	 * @return
@@ -386,7 +436,7 @@ public abstract class ContainerEntity extends DecoratedEntity implements IExtens
 				if (func != null)
 					return func;
 			}
-			for (Entity child:this.getChildren()) {
+			for (Entity child : this.getChildren()) {
 				if (child instanceof AliasEntity) {
 					if (child.getRawName().equals(functionName))
 						return child;
@@ -400,7 +450,7 @@ public abstract class ContainerEntity extends DecoratedEntity implements IExtens
 	/**
 	 * lookup function in local entity. It could be override such as the type entity
 	 * (it should also lookup the inherit/implemented types
-	 * 
+	 *
 	 * @param functionName
 	 * @return
 	 */
@@ -417,7 +467,7 @@ public abstract class ContainerEntity extends DecoratedEntity implements IExtens
 	 * normal entity differently. - for multiDeclare entity, it means to lookup all
 	 * entities - for normal entity, it means to lookup entities from current scope
 	 * still root
-	 * 
+	 *
 	 * @param varName
 	 * @return
 	 */
@@ -428,7 +478,7 @@ public abstract class ContainerEntity extends DecoratedEntity implements IExtens
 
 	/**
 	 * To found the var.
-	 * 
+	 *
 	 * @param fromEntity
 	 * @param varName
 	 * @return
@@ -440,7 +490,7 @@ public abstract class ContainerEntity extends DecoratedEntity implements IExtens
 				if (var != null)
 					return var;
 			}
-			for (Entity child:this.getChildren()) {
+			for (Entity child : this.getChildren()) {
 				if (child instanceof AliasEntity) {
 					if (child.getRawName().equals(varName))
 						return child;
@@ -458,7 +508,7 @@ public abstract class ContainerEntity extends DecoratedEntity implements IExtens
 		}
 		return null;
 	}
-	
+
 	public VarEntity lookupVarLocally(String varName) {
 		return this.lookupVarLocally(GenericName.build(varName));
 	}
@@ -468,22 +518,23 @@ public abstract class ContainerEntity extends DecoratedEntity implements IExtens
 	}
 
 	public Collection<ContainerEntity> getResolvedMixins() {
-		if (resolvedMixins==null) return new ArrayList<>();
+		if (resolvedMixins == null) return new ArrayList<>();
 		return resolvedMixins;
 	}
 
-	HashMap<String,Set<Expression>> expressionUseList = null;
+	HashMap<String, Set<Expression>> expressionUseList = null;
+
 	public void addRelation(Expression expression, Relation relation) {
-		String key = relation.getEntity().qualifiedName+relation.getType();
-		if (this.expressionUseList==null)
+		String key = relation.getEntity().qualifiedName + relation.getType();
+		if (this.expressionUseList == null)
 			expressionUseList = new HashMap<>();
-		if (expressionUseList.containsKey(key)){
+		if (expressionUseList.containsKey(key)) {
 			Set<Expression> expressions = expressionUseList.get(key);
-			for (Expression expr:expressions){
-				if (linkedExpr(expr,expression)) return;
+			for (Expression expr : expressions) {
+				if (linkedExpr(expr, expression)) return;
 			}
-		}else{
-			expressionUseList.put(key,new HashSet<>());
+		} else {
+			expressionUseList.put(key, new HashSet<>());
 		}
 
 		expressionUseList.get(key).add(expression);
@@ -492,15 +543,15 @@ public abstract class ContainerEntity extends DecoratedEntity implements IExtens
 
 	private boolean linkedExpr(Expression a, Expression b) {
 		Expression parent = a.getParent();
-		while(parent!=null){
-			if (parent==b) return true;
+		while (parent != null) {
+			if (parent == b) return true;
 			parent = parent.getParent();
 		}
 		parent = b.getParent();
-		while(parent!=null){
-			if (parent==a) return true;
+		while (parent != null) {
+			if (parent == a) return true;
 			parent = parent.getParent();
 		}
-		return  false;
+		return false;
 	}
 }
