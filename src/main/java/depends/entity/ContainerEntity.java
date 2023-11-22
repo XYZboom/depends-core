@@ -367,12 +367,6 @@ public abstract class ContainerEntity extends DecoratedEntity implements IExtens
 					searched.add(entity);
 				}
 			}
-			if (fromEntity instanceof FileEntity fileEntity) {
-				Collection<Entity> importedTypes = fileEntity.getImportedTypes();
-				for (Entity entity : importedTypes) {
-					consumer.accept(entity);
-				}
-			}
 			if (fromEntity instanceof ContainerEntity container) {
 				for (FunctionEntity function : container.getFunctions()) {
 					if (Objects.equals(function.rawName, functionName)) {
@@ -404,24 +398,31 @@ public abstract class ContainerEntity extends DecoratedEntity implements IExtens
 	) {
 		ArrayList<FunctionEntity> currentTypeFunc = new ArrayList<>();
 		ArrayList<FunctionEntity> nonTypeFunc = new ArrayList<>();
-		processVisibleEntitiesThatNameOf(this, genericName, true,
-				(entity) -> {
-					if (!(entity instanceof FunctionEntity function)) return;
-					if (!function.isExtension()) return;
-					ArrayList<VarEntity> parameters = function.getParameters();
-					if (parameters == null || parameters.isEmpty()) return;
-					VarEntity firstParameter = parameters.get(0);
-					if (firstParameter == null) return;
-					TypeEntity parameterType = firstParameter.getType();
-					if (parameterType == null) return;
-					if (parameterType.equals(type)) {
-						if (!currentTypeFunc.contains(function)) {
-							currentTypeFunc.add(function);
-						}
-					} else if (!nonTypeFunc.contains(function)) {
-						nonTypeFunc.add(function);
-					}
-				});
+		Entity ancestorOfType = getAncestorOfType(FileEntity.class);
+		Consumer<Entity> consumer = (entity) -> {
+			if (!(entity instanceof FunctionEntity function)) return;
+			if (!function.isExtension()) return;
+			ArrayList<VarEntity> parameters = function.getParameters();
+			if (parameters == null || parameters.isEmpty()) return;
+			VarEntity firstParameter = parameters.get(0);
+			if (firstParameter == null) return;
+			TypeEntity parameterType = firstParameter.getType();
+			if (parameterType == null) return;
+			if (parameterType.equals(type)) {
+				if (!currentTypeFunc.contains(function)) {
+					currentTypeFunc.add(function);
+				}
+			} else if (!nonTypeFunc.contains(function)) {
+				nonTypeFunc.add(function);
+			}
+		};
+		if (ancestorOfType instanceof FileEntity fileEntity) {
+			Collection<Entity> importedTypes = fileEntity.getImportedTypes();
+			for (Entity entity : importedTypes) {
+				consumer.accept(entity);
+			}
+		}
+		processVisibleEntitiesThatNameOf(this, genericName, true, consumer);
 		if (!currentTypeFunc.isEmpty()) {
 			return currentTypeFunc.get(0);
 		}
