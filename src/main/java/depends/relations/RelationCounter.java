@@ -29,6 +29,7 @@ import depends.entity.*;
 import depends.entity.repo.EntityRepo;
 import depends.extractor.AbstractLangProcessor;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -223,9 +224,16 @@ public class RelationCounter {
 		for (Entity returnType : func.getReturnTypes()) {
 			func.addRelation(buildRelation(func, DependencyType.RETURN, returnType.getActualReferTo()));
 		}
-		for (VarEntity parameter : func.getParameters()) {
-			if (parameter.getType() != null)
-				func.addRelation(buildRelation(func, DependencyType.PARAMETER, parameter.getActualReferTo()));
+		ArrayList<VarEntity> parameters = func.getParameters();
+		for (int i = 0, parametersSize = parameters.size(); i < parametersSize; i++) {
+			VarEntity parameter = parameters.get(i);
+			if (parameter.getType() != null) {
+				if (i == 0 && func.isExtension()) {
+					func.addRelation(buildRelation(func, DependencyType.EXTENSION, parameter.getActualReferTo()));
+				} else {
+					func.addRelation(buildRelation(func, DependencyType.PARAMETER, parameter.getActualReferTo()));
+				}
+			}
 		}
 		for (Entity throwType : func.getThrowTypes()) {
 			func.addRelation(buildRelation(func, DependencyType.THROW, throwType));

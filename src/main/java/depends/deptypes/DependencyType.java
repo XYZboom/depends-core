@@ -37,6 +37,7 @@ public class DependencyType {
 	public static final String SET = "Set";
 	public static final String USE = "Use";
 	public static final String DELEGATE = "Delegate";
+	public static final String EXTENSION = "Extension";
 	public static final String RECEIVE = "Receive";
 	public static final String CREATE = "Create";
 	public static final String CAST = "Cast";
