@@ -367,6 +367,12 @@ public abstract class ContainerEntity extends DecoratedEntity implements IExtens
 					searched.add(entity);
 				}
 			}
+			if (fromEntity instanceof FileEntity fileEntity) {
+				Collection<Entity> importedTypes = fileEntity.getImportedTypes();
+				for (Entity entity : importedTypes) {
+					consumer.accept(entity);
+				}
+			}
 			if (fromEntity instanceof ContainerEntity container) {
 				for (FunctionEntity function : container.getFunctions()) {
 					if (Objects.equals(function.rawName, functionName)) {
