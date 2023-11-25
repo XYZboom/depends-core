@@ -63,7 +63,21 @@ public abstract class FileParser {
 				fileEntity.setInProjectScope(true);
 		}else {
 			System.out.println("parsing " + filePath + "...");
-			parseFile(filePath, extraListeners);
+			final String finalFilePath = filePath;
+			boolean skip = extraListeners.stream().anyMatch(listener -> {
+				if (listener instanceof IFileListener fileListener) {
+					return !fileListener.enterFile(finalFilePath);
+				}
+				return false;
+			});
+			if(!skip) {
+				parseFile(filePath, extraListeners);
+			}
+			extraListeners.forEach(listener -> {
+				if (listener instanceof IFileListener fileListener) {
+					fileListener.exitFile(finalFilePath);
+				}
+			});
 			entityRepo.completeFile(filePath);
 		}
 	}
