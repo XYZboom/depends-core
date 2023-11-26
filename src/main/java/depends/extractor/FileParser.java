@@ -98,9 +98,10 @@ public abstract class FileParser {
 	 * @param extraListeners
 	 * @throws IOException
 	 */
-	protected void parseFile(@NotNull String filePath, @NotNull List<ParseTreeListener> extraListeners) throws IOException {
-		// empty method instead of abstract here to avoid disrupting compatibility
-	}
+	protected abstract void parseFile(
+			@NotNull String filePath,
+			@NotNull List<ParseTreeListener> extraListeners
+	) throws IOException;
 
 	protected boolean isPhase2Files(String filePath){
 		return false;
