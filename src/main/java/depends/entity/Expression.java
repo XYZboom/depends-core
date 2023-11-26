@@ -28,6 +28,7 @@ import depends.entity.repo.EntityRepo;
 import depends.relations.IBindingResolver;
 import org.apache.commons.codec.binary.StringUtils;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
@@ -37,7 +38,7 @@ import java.util.Objects;
  * Expression
  */
 public class Expression implements Serializable {
-	private static final long serialVersionUID = 1L;
+	private static final long serialVersionUID = 2L;
 
 	public Integer id;
 	private String text;                // not only for debug purpose but also for kotlin expression call deduce
