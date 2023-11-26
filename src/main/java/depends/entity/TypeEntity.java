@@ -199,6 +199,33 @@ public class TypeEntity extends ContainerEntity {
 		}
 		return null;
 	}
-	
-	
+
+	/**
+	 * whether this type is a parent class of another type.<br>
+	 * 判断本类型是否是other类型的父类
+	 * @param other other type.
+	 * @param strict If set to true, only returns true when strictly being a parent class.
+	 *               如果设置为true，只有在严格为父类时才返回true
+	 * @return as told above. 见上文
+	 */
+	public boolean isTypeParent(TypeEntity other, boolean strict) {
+		if (!strict && equals(other)) {
+			return true;
+		}
+		if (getInheritedTypes() != null) {
+			for (TypeEntity parentType : getInheritedTypes()) {
+				if (parentType.isTypeParent(other, false)) {
+					return true;
+				}
+			}
+		}
+		if (getImplementedTypes() != null) {
+			for (TypeEntity parentType : getInheritedTypes()) {
+				if (parentType.isTypeParent(other, false)) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
 }

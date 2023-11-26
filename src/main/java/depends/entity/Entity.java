@@ -316,6 +316,9 @@ public abstract class Entity {
 	 * 如同上面提到的那样。如果有多个，随机返回一个。
 	 */
 	public @Nullable <T extends Entity> T getNearest(@NotNull Collection<T> entities) {
+		if (entities.size() == 1) {
+			return entities.stream().findFirst().get();
+		}
 		HashMap<Entity, ArrayList<T>> map = new HashMap<>();
 		{
 			Entity now = this;

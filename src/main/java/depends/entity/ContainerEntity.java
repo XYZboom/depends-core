@@ -264,7 +264,7 @@ public abstract class ContainerEntity extends DecoratedEntity implements IExtens
 	 * @param functionName
 	 * @return
 	 */
-	public List<Entity> lookupFunctionInVisibleScope(GenericName functionName) {
+	public @NotNull List<Entity> lookupFunctionInVisibleScope(GenericName functionName) {
 		List<Entity> functions = new ArrayList<>();
 		if (this.getMutliDeclare() != null) {
 			for (Entity fromEntity : this.getMutliDeclare().getEntities()) {
@@ -282,7 +282,7 @@ public abstract class ContainerEntity extends DecoratedEntity implements IExtens
 				return functions;
 			}
 		}
-		return null;
+		return functions;
 	}
 
 	public static void processVisibleEntitiesThatNameOf(
@@ -355,7 +355,7 @@ public abstract class ContainerEntity extends DecoratedEntity implements IExtens
 				if (!currentTypeFunc.contains(function)) {
 					currentTypeFunc.add(function);
 				}
-			} else if (!nonTypeFunc.contains(function)) {
+			} else if (!nonTypeFunc.contains(function) && parameterType.isTypeParent(type, true)) {
 				nonTypeFunc.add(function);
 			}
 		};
@@ -367,9 +367,12 @@ public abstract class ContainerEntity extends DecoratedEntity implements IExtens
 		}
 		processVisibleEntitiesThatNameOf(this, genericName, true, consumer);
 		if (!currentTypeFunc.isEmpty()) {
-			return currentTypeFunc.get(0);
+			return getNearest(currentTypeFunc);
 		}
-		return getNearest(nonTypeFunc);
+		if (!nonTypeFunc.isEmpty()) {
+			return getNearest(nonTypeFunc);
+		}
+		return null;
 	}
 
 	/**

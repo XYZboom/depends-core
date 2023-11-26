@@ -30,10 +30,10 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-public class FunctionEntity extends ContainerEntity{
+public class FunctionEntity extends ContainerEntity {
 	private List<GenericName> returnTypeIdentifiers = new ArrayList<>();
 	ArrayList<VarEntity> parameters;
-    Collection<GenericName> throwTypesIdentifiers = new ArrayList<>(); 
+	Collection<GenericName> throwTypesIdentifiers = new ArrayList<>();
 	private Collection<Entity> returnTypes = new ArrayList<>();
 	private Collection<Entity> throwTypes = new ArrayList<>();
 	private boolean isExtension = false;
@@ -46,39 +46,51 @@ public class FunctionEntity extends ContainerEntity{
 		isExtension = extension;
 	}
 
+	public boolean isExtensionOfType(TypeEntity entity) {
+		if (!isExtension()) return false;
+		if (getParameters() == null) return false;
+		if (getParameters().isEmpty()) return false;
+		VarEntity firstParam = getParameters().get(0);
+		if (firstParam == null) return false;
+		TypeEntity firstParamType = firstParam.getType();
+		return firstParamType != null && firstParamType.isTypeParent(entity, false);
+	}
+
 	public FunctionEntity() {
 		this.parameters = new ArrayList<>();
 	}
-    public FunctionEntity(GenericName simpleName, Entity parent, Integer id, GenericName returnType) {
-		super(simpleName, parent,id);
+
+	public FunctionEntity(GenericName simpleName, Entity parent, Integer id, GenericName returnType) {
+		super(simpleName, parent, id);
 		this.returnTypes = new ArrayList<>();
 		returnTypeIdentifiers = new ArrayList<>();
 		this.parameters = new ArrayList<>();
 		throwTypesIdentifiers = new ArrayList<>();
 		addReturnType(returnType);
 	}
+
 	public Collection<Entity> getReturnTypes() {
 		return returnTypes;
 	}
-	
+
 	@Override
 	public TypeEntity getType() {
-		if (returnTypes.size()>0){
+		if (returnTypes.size() > 0) {
 			Object type = returnTypes.iterator().next();
 			if (type instanceof TypeEntity)
-				return (TypeEntity)type;
+				return (TypeEntity) type;
 		}
 		return null;
 	}
 
 	public void addReturnType(GenericName returnType) {
-		if (returnType==null) return;
+		if (returnType == null) return;
 		this.returnTypeIdentifiers.add(returnType);
 	}
-	
+
 	public void addReturnType(TypeEntity returnType) {
-		if (returnType==null) return;
-		if (!this.returnTypeIdentifiers.contains(returnType.rawName)){
+		if (returnType == null) return;
+		if (!this.returnTypeIdentifiers.contains(returnType.rawName)) {
 			this.returnTypeIdentifiers.add(returnType.rawName);
 			this.returnTypes.add(returnType);
 		}
@@ -87,69 +99,74 @@ public class FunctionEntity extends ContainerEntity{
 	public void addThrowTypes(List<GenericName> throwedType) {
 		throwTypesIdentifiers.addAll(throwedType);
 	}
-	
+
 	@Override
 	public void inferLocalLevelEntities(IBindingResolver bindingResolver) {
-		for (VarEntity param:parameters) {
+		for (VarEntity param : parameters) {
 			param.fillCandidateTypes(bindingResolver);
 			param.inferLocalLevelEntities(bindingResolver);
 		}
-		if (returnTypes.size()<returnTypeIdentifiers.size()) {
-			returnTypes = identifierToEntities(bindingResolver,this.returnTypeIdentifiers);
-			for ( GenericName returnTypeName: returnTypeIdentifiers) {
+		if (returnTypes.size() < returnTypeIdentifiers.size()) {
+			returnTypes = identifierToEntities(bindingResolver, this.returnTypeIdentifiers);
+			for (GenericName returnTypeName : returnTypeIdentifiers) {
 				Collection<Entity> typeEntities = typeParametersToEntities(bindingResolver, returnTypeName);
 				this.appendTypeParameters(typeEntities);
 			}
 		}
-		if (throwTypes.size()<throwTypesIdentifiers.size())
-			throwTypes = identifierToEntities(bindingResolver,this.throwTypesIdentifiers);
+		if (throwTypes.size() < throwTypesIdentifiers.size())
+			throwTypes = identifierToEntities(bindingResolver, this.throwTypesIdentifiers);
 		super.inferLocalLevelEntities(bindingResolver);
 	}
-	
+
 
 	private Collection<Entity> typeParametersToEntities(IBindingResolver bindingResolver, GenericName name) {
 		ArrayList<Entity> r = new ArrayList<>();
-		for (GenericName typeParameter:name.getArguments()) {
-			toEntityList(bindingResolver, r,typeParameter);
+		for (GenericName typeParameter : name.getArguments()) {
+			toEntityList(bindingResolver, r, typeParameter);
 		}
 		return r;
 	}
 
-	
+
 	public ArrayList<VarEntity> getParameters() {
 		return parameters;
 	}
+
 	public Collection<Entity> getThrowTypes() {
 		return throwTypes;
 	}
+
 	@Override
 	public Entity lookupVarInVisibleScope(GenericName varName) {
-		for (VarEntity param:parameters) {
+		for (VarEntity param : parameters) {
 			if (varName.equals(param.getRawName())) {
 				return param;
 			}
 		}
 		return super.lookupVarInVisibleScope(varName);
 	}
+
 	public void addParameter(VarEntity var) {
 		this.parameters.add(var);
 	}
+
 	@Override
 	public String getDisplayName() {
 		FileEntity f = (FileEntity) this.getAncestorOfType(FileEntity.class);
-		return f.getRawName()+"("+this.getQualifiedName()+")";
+		return f.getRawName() + "(" + this.getQualifiedName() + ")";
 	}
+
 	@Override
 	public VarEntity lookupVarLocally(GenericName varName) {
-		for (VarEntity var:this.parameters) {
+		for (VarEntity var : this.parameters) {
 			if (var.getRawName().equals(varName))
 				return var;
 		}
 		return super.lookupVarLocally(varName);
 	}
-	
+
 	public void linkReturnToLastExpression() {
-		if (expressionList()==null) return;
+		if (expressionList() == null) return;
 		for (int i = expressionList().size() - 1; i >= 0; i--) {
 			Expression expr = expressionList().get(i);
 			if (expr.isStatement())

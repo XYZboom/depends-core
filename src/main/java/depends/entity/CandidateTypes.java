@@ -76,17 +76,14 @@ public class CandidateTypes extends TypeEntity {
  	public TypeEntity getInheritedType() {
 		return inheritedType;
 	}
- 	@Override
+ 	@NotNull
+	@Override
  	public List<Entity> lookupFunctionInVisibleScope(GenericName functionName) {
  		List<Entity> functions = new ArrayList<>();
  		for (TypeEntity type:candidateTypes) {
  			List<Entity> f = type.lookupFunctionInVisibleScope(functionName);
-			if (f!=null) {
-				functions.addAll(f);
-			}
+			functions.addAll(f);
 		}
- 		if (functions.size()==0)
- 			return null;
  		return functions;
 	}
  	

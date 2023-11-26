@@ -27,6 +27,7 @@ package depends.entity;
 import depends.entity.repo.EntityRepo;
 import depends.relations.IBindingResolver;
 import org.apache.commons.codec.binary.StringUtils;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.Serial;
 import java.io.Serializable;
@@ -38,7 +39,7 @@ import java.util.Objects;
  * Expression
  */
 public class Expression implements Serializable {
-	private static final long serialVersionUID = 2L;
+	private static final long serialVersionUID = 3L;
 
 	public Integer id;
 	private String text;                // not only for debug purpose but also for kotlin expression call deduce
@@ -75,6 +76,20 @@ public class Expression implements Serializable {
 
 	private transient ContainerEntity container;
 	private Integer containerId;
+
+	/**
+	 * The context type of this expression. If it is null, it defaults to the type entity of container
+	 * where this expression is located.
+	 * <br>
+	 * 本表达式的上下文类型。如果是null，则默认为本表达式所在的容器所在的类型实体.
+	 * <br>
+	 * Used by processing scope functions in languages such as kotlin.
+	 * <br>
+	 * 用于处理kotlin等语言的作用域函数.
+	 */
+	private transient TypeEntity contextEntity;
+
+	private Integer contextEntityId;
 
 	public void resolve(IBindingResolver bindingResolver) {
 		// 1. if expression's type existed, break;
@@ -120,17 +135,42 @@ public class Expression implements Serializable {
 				setType(entityType, entity, bindingResolver);
 				return;
 			}
+			TypeEntity context = getContext();
+			if (context != null) {
+				// search in context, does not search import in context
+				Entity contextResult = bindingResolver.resolveName(context, getIdentifier(), false);
+				if (contextResult != null && contextResult.getType() != null) {
+					setType(context.getType(), contextResult, bindingResolver);
+					return;
+				}
+			}
 			if (isCall()) {
+				List<Entity> contextFuncs = new ArrayList<>();
+				if (context != null) {
+					contextFuncs.addAll(context.lookupFunctionInVisibleScope(getIdentifier()));
+				}
 				List<Entity> funcs = getContainer().lookupFunctionInVisibleScope(getIdentifier());
-				if (funcs != null) {
+				if (!contextFuncs.isEmpty()) {
+					for (Entity func : contextFuncs) {
+						setType(func.getType(), func, bindingResolver);
+					}
+				} else {
 					for (Entity func : funcs) {
 						setType(func.getType(), func, bindingResolver);
 					}
 				}
 			} else {
-				Entity varEntity = getContainer().lookupVarInVisibleScope(getIdentifier());
+				Entity varEntity = null;
+				if (context != null) {
+					varEntity = context.lookupVarInVisibleScope(getIdentifier());
+				}
 				if (varEntity != null) {
 					setType(varEntity.getType(), varEntity, bindingResolver);
+				} else {
+					varEntity = getContainer().lookupVarInVisibleScope(getIdentifier());
+					if (varEntity != null) {
+						setType(varEntity.getType(), varEntity, bindingResolver);
+					}
 				}
 			}
 		}
@@ -143,6 +183,35 @@ public class Expression implements Serializable {
 	public void setContainer(ContainerEntity container) {
 		this.container = container;
 		containerId = container.getId();
+	}
+
+	/**
+	 * Unlike {@link #getContextEntity}, this function looks up the context stored in the expression's father
+	 * to determine the context of the expression
+	 * 与{@link #getContextEntity}不同，本函数查找存储在表达式父亲的上下文以判断表达式的上下文
+	 */
+	public @Nullable TypeEntity getContext() {
+		Expression now = this;
+		while (now != null) {
+			if (now.getContextEntity() != null) {
+				return now.getContextEntity();
+			}
+			now = now.parent;
+		}
+		Entity ancestorOfType = getContainer().getAncestorOfType(TypeEntity.class);
+		if (ancestorOfType == null) {
+			return null;
+		}
+		return ancestorOfType.getType();
+	}
+
+	public @Nullable TypeEntity getContextEntity() {
+		return contextEntity;
+	}
+
+	public void setContextEntity(TypeEntity contextEntity) {
+		this.contextEntity = contextEntity;
+		this.contextEntityId = contextEntity.getId();
 	}
 	/*
 	 * */
@@ -198,6 +267,12 @@ public class Expression implements Serializable {
 			Entity mayBeContainer = repo.getEntity(containerId);
 			if (mayBeContainer instanceof ContainerEntity containerEntity) {
 				container = containerEntity;
+			}
+		}
+		if (contextEntityId != null) {
+			Entity mayBeType = repo.getEntity(contextEntityId);
+			if (mayBeType instanceof TypeEntity typeEntity) {
+				contextEntity = typeEntity;
 			}
 		}
 	}
