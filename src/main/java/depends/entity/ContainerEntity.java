@@ -28,7 +28,6 @@ import depends.entity.repo.EntityRepo;
 import depends.relations.IBindingResolver;
 import depends.relations.Relation;
 import multilang.depends.util.file.TemporaryFile;
-import org.apache.commons.codec.binary.StringUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -113,6 +112,7 @@ public abstract class ContainerEntity extends DecoratedEntity implements IExtens
 	public void addExpression(Object key, Expression expression) {
 		expressions().put(key, expression);
 		expressionList().add(expression);
+		expression.setContainer(this);
 		expressionCount = expressionList.size();
 	}
 
@@ -177,64 +177,7 @@ public abstract class ContainerEntity extends DecoratedEntity implements IExtens
 
 
 		for (Expression expression : expressionList) {
-			// 1. if expression's type existed, break;
-			if (expression.getType() != null)
-				continue;
-			if (expression.isDot()) { // wait for previous
-				continue;
-			}
-			if (expression.getRawType() == null && expression.getIdentifier() == null)
-				continue;
-
-			// 2. if expression's rawType existed, directly infer type by rawType
-			// if expression's rawType does not existed, infer type based on identifiers
-			if (expression.getRawType() != null) {
-				expression.setType(bindingResolver.inferTypeFromName(this, expression.getRawType()), null, bindingResolver);
-				if (expression.getType() != null) {
-					continue;
-				}
-			}
-			if (expression.getIdentifier() != null) {
-				Entity entity = bindingResolver.resolveName(this, expression.getIdentifier(), true);
-				String composedName = expression.getIdentifier().toString();
-				Expression theExpr = expression;
-				if (entity == null) {
-					while (theExpr.getParent() != null && theExpr.getParent().isDot()) {
-						theExpr = theExpr.getParent();
-						if (theExpr.getIdentifier() == null) break;
-						composedName = composedName + "." + theExpr.getIdentifier().toString();
-						entity = bindingResolver.resolveName(this, GenericName.build(composedName), true);
-						if (entity != null)
-							break;
-					}
-				}
-				if (entity != null) {
-					TypeEntity entityType = entity.getType();
-					if (bindingResolver.isDelayHandleCreateExpression() &&
-							entityType != null && expression.isCall()
-							&& StringUtils.equals(entityType.rawName.getName(), composedName)) {
-						// 检测到延迟处理则在此处进行Create类型设置
-						expression.setCreate(true);
-						expression.setCall(false);
-					}
-					expression.setType(entityType, entity, bindingResolver);
-					continue;
-				}
-				if (expression.isCall()) {
-					List<Entity> funcs = this.lookupFunctionInVisibleScope(expression.getIdentifier());
-					if (funcs != null) {
-						for (Entity func : funcs) {
-							expression.setType(func.getType(), func, bindingResolver);
-						}
-					}
-				} else {
-
-					Entity varEntity = this.lookupVarInVisibleScope(expression.getIdentifier());
-					if (varEntity != null) {
-						expression.setType(varEntity.getType(), varEntity, bindingResolver);
-					}
-				}
-			}
+			expression.resolve(bindingResolver);
 		}
 	}
 

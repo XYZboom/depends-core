@@ -26,6 +26,7 @@ package depends.entity;
 
 import depends.entity.repo.EntityRepo;
 import depends.relations.IBindingResolver;
+import org.apache.commons.codec.binary.StringUtils;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -72,6 +73,67 @@ public class Expression implements Serializable {
 	//for leaf, it equals to referredEntity.getType. otherwise, depends on child's type strategy
 
 	private transient ContainerEntity container;
+	private Integer containerId;
+
+	public void resolve(IBindingResolver bindingResolver) {
+		// 1. if expression's type existed, break;
+		if (getType() != null)
+			return;
+		if (isDot()) { // wait for previous
+			return;
+		}
+		if (getRawType() == null && getIdentifier() == null)
+			return;
+
+		// 2. if expression's rawType existed, directly infer type by rawType
+		// if expression's rawType does not existed, infer type based on identifiers
+		if (getRawType() != null) {
+			setType(bindingResolver.inferTypeFromName(getContainer(), getRawType()), null, bindingResolver);
+			if (getType() != null) {
+				return;
+			}
+		}
+		if (getIdentifier() != null) {
+			Entity entity = bindingResolver.resolveName(getContainer(), getIdentifier(), true);
+			String composedName = getIdentifier().toString();
+			Expression theExpr = this;
+			if (entity == null) {
+				while (theExpr.getParent() != null && theExpr.getParent().isDot()) {
+					theExpr = theExpr.getParent();
+					if (theExpr.getIdentifier() == null) break;
+					composedName = composedName + "." + theExpr.getIdentifier().toString();
+					entity = bindingResolver.resolveName(getContainer(), GenericName.build(composedName), true);
+					if (entity != null)
+						break;
+				}
+			}
+			if (entity != null) {
+				TypeEntity entityType = entity.getType();
+				if (bindingResolver.isDelayHandleCreateExpression() &&
+						entityType != null && isCall()
+						&& StringUtils.equals(entityType.rawName.getName(), composedName)) {
+					// 检测到延迟处理则在此处进行Create类型设置
+					setCreate(true);
+					setCall(false);
+				}
+				setType(entityType, entity, bindingResolver);
+				return;
+			}
+			if (isCall()) {
+				List<Entity> funcs = getContainer().lookupFunctionInVisibleScope(getIdentifier());
+				if (funcs != null) {
+					for (Entity func : funcs) {
+						setType(func.getType(), func, bindingResolver);
+					}
+				}
+			} else {
+				Entity varEntity = getContainer().lookupVarInVisibleScope(getIdentifier());
+				if (varEntity != null) {
+					setType(varEntity.getType(), varEntity, bindingResolver);
+				}
+			}
+		}
+	}
 
 	public ContainerEntity getContainer() {
 		return container;
@@ -79,6 +141,7 @@ public class Expression implements Serializable {
 
 	public void setContainer(ContainerEntity container) {
 		this.container = container;
+		containerId = container.getId();
 	}
 	/*
 	 * */
@@ -101,7 +164,7 @@ public class Expression implements Serializable {
 		//recover parent relation
 		if (parentId != -1) {
 			for (Expression expr : expressionList) {
-				if (expr.id == parentId) {
+				if (Objects.equals(expr.id, parentId)) {
 					parent = expr;
 					break;
 				}
@@ -127,6 +190,13 @@ public class Expression implements Serializable {
 			this.referredEntity = repo.getEntity(this.referredEntityId);
 			if (this.referredEntity == null) {
 				System.err.println("unexpected: referred Entity is null" + this.referredEntityId + this.text + this.id);
+			}
+		}
+
+		if (containerId != null) {
+			Entity mayBeContainer = repo.getEntity(containerId);
+			if (mayBeContainer instanceof ContainerEntity containerEntity) {
+				container = containerEntity;
 			}
 		}
 	}
