@@ -76,8 +76,7 @@ abstract public class AbstractLangProcessor {
 
 	/**
 	 * The language specific file parser
-	 * 
-	 * @param fileFullPath
+	 *
 	 * @return
 	 */
 	public abstract FileParser createFileParser();

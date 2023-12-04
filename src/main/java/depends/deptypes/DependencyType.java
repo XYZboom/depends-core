@@ -64,6 +64,7 @@ public class DependencyType {
 		depedencyTypes.add(CREATE);
 		depedencyTypes.add(USE);
 		depedencyTypes.add(DELEGATE);
+		depedencyTypes.add(EXTENSION);
 		depedencyTypes.add(RECEIVE);
 		depedencyTypes.add(CAST);
 		depedencyTypes.add(THROW);
