@@ -38,7 +38,7 @@ import java.util.Objects;
  * Expression
  */
 public class Expression implements Serializable {
-	private static final long serialVersionUID = 3L;
+	private static final long serialVersionUID = 4L;
 
 	public Integer id;
 	private String text;                // not only for debug purpose but also for kotlin expression call deduce
@@ -97,22 +97,38 @@ public class Expression implements Serializable {
 	 */
 	private final List<GenericName> callTypeArguments = new ArrayList<>();
 
-	public void resolve(IBindingResolver bindingResolver) {
+	private transient List<Expression> callParameters = new ArrayList<>();
+
+	private final List<Integer> callParameterIds = new ArrayList<>();
+
+	/**
+	 * Confirm through parameter matching that this expression
+	 * must have called the function {@link #referredEntity} refers to
+	 */
+	private boolean explicitCallReferredEntity = false;
+
+	protected int resolveTimes = 0;
+
+	/**
+	 * @return true if the expression need resolve again
+	 */
+	public boolean resolve(IBindingResolver bindingResolver) {
 		// 1. if expression's type existed, break;
 		if (getType() != null)
-			return;
+			return false;
 		if (isDot()) { // wait for previous
-			return;
+			// this expression resolved in previous' deduceParentType call
+			return false;
 		}
 		if (getRawType() == null && getIdentifier() == null)
-			return;
+			return false;
 
 		// 2. if expression's rawType existed, directly infer type by rawType
 		// if expression's rawType does not existed, infer type based on identifiers
 		if (getRawType() != null) {
 			setType(bindingResolver.inferTypeFromName(getContainer(), getRawType()), null, bindingResolver);
 			if (getType() != null) {
-				return;
+				return false;
 			}
 		}
 		if (getIdentifier() != null) {
@@ -131,18 +147,12 @@ public class Expression implements Serializable {
 			}
 			if (entity != null) {
 				TypeEntity entityType = entity.getType();
-				if (entityType == TypeEntity.genericParameterType && entity instanceof FunctionEntity functionEntity
-						&& functionEntity.isReturnTypeGenericTypeParameter()) {
-					GenericName returnGenericRawType = functionEntity.getReturnRawType();
-					List<GenericName> funcGenericArgs = functionEntity.getRawName().getArguments();
-					int indexOfReturnRawType = funcGenericArgs.indexOf(returnGenericRawType);
-					if (callTypeArguments.size() > indexOfReturnRawType) {
-						GenericName returnRawType = callTypeArguments.get(indexOfReturnRawType);
-						Entity mayBeEntity = bindingResolver.resolveName(getContainer(), returnRawType, true);
-						if (mayBeEntity instanceof TypeEntity need) {
-							entityType = need;
-						}
+				if (entity instanceof FunctionEntity function) {
+					if (resolveTimes == 0) {
+						resolveTimes++;
+						return true;
 					}
+					entityType = function.resolveFunctionCallType(this, bindingResolver);
 				}
 				if (bindingResolver.isDelayHandleCreateExpression() &&
 						entityType != null && isCall()
@@ -152,7 +162,7 @@ public class Expression implements Serializable {
 					setCall(false);
 				}
 				setType(entityType, entity, bindingResolver);
-				return;
+				return false;
 			}
 			TypeEntity context = getContext();
 			if (context != null) {
@@ -160,10 +170,14 @@ public class Expression implements Serializable {
 				Entity contextResult = bindingResolver.resolveName(context, getIdentifier(), false);
 				if (contextResult != null && contextResult.getType() != null) {
 					setType(context.getType(), contextResult, bindingResolver);
-					return;
+					return false;
 				}
 			}
 			if (isCall()) {
+				if (resolveTimes == 0) {
+					resolveTimes++;
+					return true;
+				}
 				List<Entity> contextFuncs = new ArrayList<>();
 				if (context != null) {
 					contextFuncs.addAll(context.lookupFunctionInVisibleScope(getIdentifier()));
@@ -193,6 +207,7 @@ public class Expression implements Serializable {
 				}
 			}
 		}
+		return false;
 	}
 
 	public ContainerEntity getContainer() {
@@ -251,12 +266,14 @@ public class Expression implements Serializable {
 		this.deducedTypeVars = new ArrayList<>();
 
 		//recover parent relation
-		if (parentId != -1) {
-			for (Expression expr : expressionList) {
-				if (Objects.equals(expr.id, parentId)) {
-					parent = expr;
-					break;
-				}
+		boolean parentFind = false;
+		for (Expression expr : expressionList) {
+			if (parentId != -1 && !parentFind && Objects.equals(expr.id, parentId)) {
+				parent = expr;
+				parentFind = true;
+			}
+			if (callParameterIds.contains(expr.id)) {
+				getCallParameters().add(expr);
 			}
 		}
 
@@ -646,5 +663,30 @@ public class Expression implements Serializable {
 
 	public List<GenericName> getCallTypeArguments() {
 		return callTypeArguments;
+	}
+
+	public List<Expression> getCallParameters() {
+		if (callParameters == null) {
+			callParameters = new ArrayList<>();
+		}
+		return callParameters;
+	}
+
+	public void addCallParameter(Expression expression) {
+		callParameters.add(expression);
+		callParameterIds.add(expression.id);
+	}
+
+	public void clearCallParameters() {
+		callParameters.clear();
+		callParameterIds.clear();
+	}
+
+	public boolean isExplicitCallReferredEntity() {
+		return explicitCallReferredEntity;
+	}
+
+	public void setExplicitCallReferredEntity(boolean explicitCallReferredEntity) {
+		this.explicitCallReferredEntity = explicitCallReferredEntity;
 	}
 }

@@ -27,9 +27,9 @@ package depends.entity;
 import depends.relations.IBindingResolver;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 public class FunctionEntity extends ContainerEntity {
 	private List<GenericName> returnTypeIdentifiers = new ArrayList<>();
@@ -186,5 +186,54 @@ public class FunctionEntity extends ContainerEntity {
 		return returnTypeIdentifiers == null ? null
 				: returnTypeIdentifiers.isEmpty() ? null
 				: returnTypeIdentifiers.get(0);
+	}
+
+	public @Nullable TypeEntity resolveFunctionCallType(Expression expression, IBindingResolver bindingResolver) {
+		TypeEntity result = null;
+		if (expression.isExplicitCallReferredEntity()) {
+			result = expression.getType();
+		}
+		int parameterSize = parameters.size();
+		boolean anyParameterUnmatched = false;
+		Map<GenericName, TypeEntity> genericTypeInfer = new HashMap<>();
+		if (parameterSize == expression.getCallParameters().size()) {
+			for (int i = 0; i < parameterSize; i++) {
+				GenericName needTypeRawName = parameters.get(i).getRawType();
+				Expression parameterExpression = expression.getCallParameters().get(i);
+				TypeEntity parameterExpressionType = parameterExpression.getType();
+				if (isGenericTypeParameter(needTypeRawName)) {
+					genericTypeInfer.put(needTypeRawName, parameterExpressionType);
+				} else {
+					if (parameterExpressionType == null ||
+							!Objects.equals(parameterExpressionType.rawName, needTypeRawName)) {
+						anyParameterUnmatched = true;
+					}
+				}
+			}
+		}
+		if (isReturnTypeGenericTypeParameter()) {
+			GenericName returnGenericRawType = getReturnRawType();
+			List<GenericName> funcGenericArgs = getRawName().getArguments();
+			int indexOfReturnRawType = funcGenericArgs.indexOf(returnGenericRawType);
+			if (expression.getCallTypeArguments().size() == funcGenericArgs.size()) {
+				GenericName returnRawType = expression.getCallTypeArguments().get(indexOfReturnRawType);
+				Entity mayBeEntity = bindingResolver.resolveName(expression.getContainer(), returnRawType, true);
+				if (mayBeEntity instanceof TypeEntity need) {
+					result = need;
+				}
+			} else {
+				GenericName returnRawType = getReturnRawType();
+				TypeEntity returnTypeInfer = genericTypeInfer.get(returnRawType);
+				if (returnTypeInfer != null) {
+					result = returnTypeInfer;
+				}
+			}
+		} else {
+			result = getType();
+		}
+		if (!anyParameterUnmatched) {
+			expression.setExplicitCallReferredEntity(true);
+		}
+		return result;
 	}
 }

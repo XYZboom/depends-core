@@ -175,8 +175,13 @@ public abstract class ContainerEntity extends DecoratedEntity implements IExtens
 		if (expressionList == null) return;
 		if (expressionList.size() > 10000) return;
 
-
+		ArrayList<Expression> expressionsNeedResolveAgain = new ArrayList<>();
 		for (Expression expression : expressionList) {
+			if (expression.resolve(bindingResolver)) {
+				expressionsNeedResolveAgain.add(expression);
+			}
+		}
+		for (Expression expression : expressionsNeedResolveAgain) {
 			expression.resolve(bindingResolver);
 		}
 	}
