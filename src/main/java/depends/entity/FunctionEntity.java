@@ -25,6 +25,7 @@ SOFTWARE.
 package depends.entity;
 
 import depends.relations.IBindingResolver;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -172,5 +173,18 @@ public class FunctionEntity extends ContainerEntity {
 			if (expr.isStatement())
 				expr.addDeducedTypeFunction(this);
 		}
+	}
+
+	public boolean isReturnTypeGenericTypeParameter() {
+		if (returnTypeIdentifiers.isEmpty()) {
+			return false;
+		}
+		return isGenericTypeParameter(returnTypeIdentifiers.get(0));
+	}
+
+	public @Nullable GenericName getReturnRawType() {
+		return returnTypeIdentifiers == null ? null
+				: returnTypeIdentifiers.isEmpty() ? null
+				: returnTypeIdentifiers.get(0);
 	}
 }

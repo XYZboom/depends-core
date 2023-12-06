@@ -116,7 +116,7 @@ public abstract class DecoratedEntity extends Entity{
 	}
 
 	public boolean isGenericTypeParameter(GenericName rawType) {
-		boolean foundInCurrentLevel =  rawType.find(rawType);
+		boolean foundInCurrentLevel =  rawName.find(rawType);
 		if (foundInCurrentLevel) return true;
 		if (this.getParent()==null || !(this.getParent() instanceof ContainerEntity))
 			return false;

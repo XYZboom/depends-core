@@ -29,7 +29,6 @@ import depends.relations.IBindingResolver;
 import org.apache.commons.codec.binary.StringUtils;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.Serial;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
@@ -91,6 +90,13 @@ public class Expression implements Serializable {
 
 	private Integer contextEntityId;
 
+	/**
+	 * type arguments in call expression that matches type parameters in
+	 * a function.<br>
+	 * Call类型的表达式中的泛型参数，与调用的函数的泛型参数所匹配。<br>
+	 */
+	private final List<GenericName> callTypeArguments = new ArrayList<>();
+
 	public void resolve(IBindingResolver bindingResolver) {
 		// 1. if expression's type existed, break;
 		if (getType() != null)
@@ -125,6 +131,19 @@ public class Expression implements Serializable {
 			}
 			if (entity != null) {
 				TypeEntity entityType = entity.getType();
+				if (entityType == TypeEntity.genericParameterType && entity instanceof FunctionEntity functionEntity
+						&& functionEntity.isReturnTypeGenericTypeParameter()) {
+					GenericName returnGenericRawType = functionEntity.getReturnRawType();
+					List<GenericName> funcGenericArgs = functionEntity.getRawName().getArguments();
+					int indexOfReturnRawType = funcGenericArgs.indexOf(returnGenericRawType);
+					if (callTypeArguments.size() > indexOfReturnRawType) {
+						GenericName returnRawType = callTypeArguments.get(indexOfReturnRawType);
+						Entity mayBeEntity = bindingResolver.resolveName(getContainer(), returnRawType, true);
+						if (mayBeEntity instanceof TypeEntity need) {
+							entityType = need;
+						}
+					}
+				}
 				if (bindingResolver.isDelayHandleCreateExpression() &&
 						entityType != null && isCall()
 						&& StringUtils.equals(entityType.rawName.getName(), composedName)) {
@@ -623,5 +642,9 @@ public class Expression implements Serializable {
 
 	public Location getLocation() {
 		return location;
+	}
+
+	public List<GenericName> getCallTypeArguments() {
+		return callTypeArguments;
 	}
 }
