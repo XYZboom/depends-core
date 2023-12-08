@@ -107,7 +107,7 @@ public class Expression implements Serializable {
 	 */
 	private boolean explicitCallReferredEntity = false;
 
-	protected int resolveTimes = 0;
+	protected boolean resolved = false;
 
 	/**
 	 * @return true if the expression need resolve again
@@ -148,8 +148,7 @@ public class Expression implements Serializable {
 			if (entity != null) {
 				TypeEntity entityType = entity.getType();
 				if (entity instanceof FunctionEntity function) {
-					if (resolveTimes == 0) {
-						resolveTimes++;
+					if (getCallParameters().stream().anyMatch(it -> !it.resolved)) {
 						return true;
 					}
 					entityType = function.resolveFunctionCallType(this, bindingResolver);
@@ -174,8 +173,7 @@ public class Expression implements Serializable {
 				}
 			}
 			if (isCall()) {
-				if (resolveTimes == 0) {
-					resolveTimes++;
+				if (getCallParameters().stream().anyMatch(it -> !it.resolved)) {
 					return true;
 				}
 				List<Entity> contextFuncs = new ArrayList<>();
