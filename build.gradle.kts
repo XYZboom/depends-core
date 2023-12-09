@@ -1,5 +1,4 @@
 plugins {
-    kotlin("jvm") version "1.9.0"
     id("java")
     id("maven-publish")
 }
@@ -56,6 +55,7 @@ repositories {
 }
 
 dependencies {
+    implementation("org.jetbrains:annotations:24.0.1")
     implementation("org.antlr:antlr4-runtime:4.13.1")
     implementation("cn.emergentdesign.se:utils:0.1.1")
     implementation("javax.xml.bind:jaxb-api:2.3.1")
