@@ -193,40 +193,41 @@ public class FunctionEntity extends ContainerEntity {
 		if (expression.isExplicitCallReferredEntity()) {
 			result = expression.getType();
 		}
-		int parameterSize = parameters.size();
+		int parameterSize = getParameters().size();
 		boolean anyParameterUnmatched = false;
 		Map<GenericName, TypeEntity> genericTypeInfer = new HashMap<>();
+		List<GenericName> funcGenericArgs = getRawName().getArguments();
+		// The passed in generic type matches the generic parameters
+		List<GenericName> callTypeArguments = expression.getCallTypeArguments();
+		boolean genericArgsMatch = callTypeArguments.size() == funcGenericArgs.size();
+		if (genericArgsMatch) {
+			for (int i = 0; i < funcGenericArgs.size(); i++) {
+				genericTypeInfer.put(funcGenericArgs.get(i),
+						bindingResolver.inferTypeFromName(
+								expression.getContainer(), callTypeArguments.get(i)
+						));
+			}
+		}
 		if (parameterSize == expression.getCallParameters().size()) {
 			for (int i = 0; i < parameterSize; i++) {
-				GenericName needTypeRawName = parameters.get(i).getRawType();
+				GenericName needTypeRawName = getParameters().get(i).getRawType();
 				Expression parameterExpression = expression.getCallParameters().get(i);
 				TypeEntity parameterExpressionType = parameterExpression.getType();
-				if (isGenericTypeParameter(needTypeRawName)) {
+				if (!genericArgsMatch && isGenericTypeParameter(needTypeRawName)) {
 					genericTypeInfer.put(needTypeRawName, parameterExpressionType);
 				} else {
 					if (parameterExpressionType == null ||
-							!Objects.equals(parameterExpressionType.rawName, needTypeRawName)) {
+							!Objects.equals(parameterExpressionType.getRawName(), needTypeRawName)) {
 						anyParameterUnmatched = true;
 					}
 				}
 			}
 		}
 		if (isReturnTypeGenericTypeParameter()) {
-			GenericName returnGenericRawType = getReturnRawType();
-			List<GenericName> funcGenericArgs = getRawName().getArguments();
-			int indexOfReturnRawType = funcGenericArgs.indexOf(returnGenericRawType);
-			if (expression.getCallTypeArguments().size() == funcGenericArgs.size()) {
-				GenericName returnRawType = expression.getCallTypeArguments().get(indexOfReturnRawType);
-				Entity mayBeEntity = bindingResolver.resolveName(expression.getContainer(), returnRawType, true);
-				if (mayBeEntity instanceof TypeEntity need) {
-					result = need;
-				}
-			} else {
-				GenericName returnRawType = getReturnRawType();
-				TypeEntity returnTypeInfer = genericTypeInfer.get(returnRawType);
-				if (returnTypeInfer != null) {
-					result = returnTypeInfer;
-				}
+			GenericName returnRawType = getReturnRawType();
+			TypeEntity returnTypeInfer = genericTypeInfer.get(returnRawType);
+			if (returnTypeInfer != null) {
+				result = returnTypeInfer;
 			}
 		} else {
 			result = getType();
@@ -234,6 +235,7 @@ public class FunctionEntity extends ContainerEntity {
 		if (!anyParameterUnmatched) {
 			expression.setExplicitCallReferredEntity(true);
 		}
+		expression.setGenericTypeInfer(genericTypeInfer);
 		return result;
 	}
 }

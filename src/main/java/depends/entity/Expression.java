@@ -30,15 +30,13 @@ import org.apache.commons.codec.binary.StringUtils;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 /**
  * Expression
  */
 public class Expression implements Serializable {
-	private static final long serialVersionUID = 4L;
+	private static final long serialVersionUID = 5L;
 
 	public Integer id;
 	private String text;                // not only for debug purpose but also for kotlin expression call deduce
@@ -51,6 +49,7 @@ public class Expression implements Serializable {
 	private boolean isCreate = false;
 	private boolean isCast = false;
 	private boolean isThrow = false;
+	private boolean isParameter = false;
 	private boolean isStatement = false; //statement is only used for return type calcuation in some langs such as ruby
 	//they will not be treat as real expressions in case of relation calculation
 	protected boolean deriveTypeFromChild = true;
@@ -106,6 +105,10 @@ public class Expression implements Serializable {
 	 * must have called the function {@link #referredEntity} refers to
 	 */
 	private boolean explicitCallReferredEntity = false;
+
+	private transient Map<GenericName, TypeEntity> genericTypeInfer;
+
+	private Map<GenericName, Integer> genericTypeInferId;
 
 	protected boolean resolved = false;
 
@@ -167,9 +170,18 @@ public class Expression implements Serializable {
 			if (context != null) {
 				// search in context, does not search import in context
 				Entity contextResult = bindingResolver.resolveName(context, getIdentifier(), false);
-				if (contextResult != null && contextResult.getType() != null) {
-					setType(context.getType(), contextResult, bindingResolver);
-					return false;
+				if (contextResult != null) {
+					TypeEntity contextResultType = contextResult.getType();
+					if (contextResult instanceof FunctionEntity contextFunction) {
+						if (getCallParameters().stream().anyMatch(it -> !it.resolved)) {
+							return true;
+						}
+						contextResultType = contextFunction.resolveFunctionCallType(this, bindingResolver);
+					}
+					if (contextResultType != null) {
+						setType(contextResultType, contextResult, bindingResolver);
+						return false;
+					}
 				}
 			}
 			if (isCall()) {
@@ -183,11 +195,19 @@ public class Expression implements Serializable {
 				List<Entity> funcs = getContainer().lookupFunctionInVisibleScope(getIdentifier());
 				if (!contextFuncs.isEmpty()) {
 					for (Entity func : contextFuncs) {
-						setType(func.getType(), func, bindingResolver);
+						TypeEntity funcType = func.getType();
+						if (func instanceof FunctionEntity functionEntity) {
+							funcType = functionEntity.resolveFunctionCallType(this, bindingResolver);
+						}
+						setType(funcType, func, bindingResolver);
 					}
 				} else {
 					for (Entity func : funcs) {
-						setType(func.getType(), func, bindingResolver);
+						TypeEntity funcType = func.getType();
+						if (func instanceof FunctionEntity functionEntity) {
+							funcType = functionEntity.resolveFunctionCallType(this, bindingResolver);
+						}
+						setType(funcType, func, bindingResolver);
 					}
 				}
 			} else {
@@ -307,6 +327,18 @@ public class Expression implements Serializable {
 			Entity mayBeType = repo.getEntity(contextEntityId);
 			if (mayBeType instanceof TypeEntity typeEntity) {
 				contextEntity = typeEntity;
+			}
+		}
+		if (genericTypeInferId != null) {
+			genericTypeInfer = new HashMap<>();
+			for (Map.Entry<GenericName, Integer> entry : genericTypeInferId.entrySet()) {
+				Integer id = entry.getValue();
+				if (id != null) {
+					Entity entity = repo.getEntity(id);
+					if (entity instanceof TypeEntity typeEntity) {
+						genericTypeInfer.put(entry.getKey(), typeEntity);
+					}
+				}
 			}
 		}
 	}
@@ -606,6 +638,14 @@ public class Expression implements Serializable {
 		this.isCall = isCall;
 	}
 
+	public boolean isParameter() {
+		return isParameter;
+	}
+
+	public void setParameter(boolean parameter) {
+		isParameter = parameter;
+	}
+
 	public void disableDriveTypeFromChild() {
 		deriveTypeFromChild = false;
 	}
@@ -680,11 +720,32 @@ public class Expression implements Serializable {
 		callParameterIds.clear();
 	}
 
+	public int getParameterIndex() {
+		Expression parent1 = getParent();
+		if (parent1 == null) return -1;
+		return parent1.getCallParameters().indexOf(this);
+	}
+
 	public boolean isExplicitCallReferredEntity() {
 		return explicitCallReferredEntity;
 	}
 
 	public void setExplicitCallReferredEntity(boolean explicitCallReferredEntity) {
 		this.explicitCallReferredEntity = explicitCallReferredEntity;
+	}
+
+	public Map<GenericName, TypeEntity> getGenericTypeInfer() {
+		return genericTypeInfer;
+	}
+
+	public void setGenericTypeInfer(Map<GenericName, TypeEntity> genericTypeInfer) {
+		this.genericTypeInfer = genericTypeInfer;
+		this.genericTypeInferId = new HashMap<>();
+		for (Map.Entry<GenericName, TypeEntity> entry : genericTypeInfer.entrySet()) {
+			TypeEntity value = entry.getValue();
+			if (value != null) {
+				genericTypeInferId.put(entry.getKey(), value.getId());
+			}
+		}
 	}
 }
