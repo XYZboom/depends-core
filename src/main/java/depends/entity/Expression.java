@@ -37,7 +37,7 @@ import java.util.*;
  * Expression
  */
 public class Expression implements Serializable {
-	private static final long serialVersionUID = 6L;
+	private static final long serialVersionUID = 7L;
 
 	public Integer id;
 	private String text;                // not only for debug purpose but also for kotlin expression call deduce
@@ -100,6 +100,14 @@ public class Expression implements Serializable {
 	private transient List<Expression> callParameters = new ArrayList<>();
 
 	private final List<Integer> callParameterIds = new ArrayList<>();
+
+	/**
+	 * The expression of the function caller
+	 * 函数调用方的表达式
+	 */
+	private transient Expression caller;
+
+	private Integer callerId;
 
 	/**
 	 * Confirm through parameter matching that this expression
@@ -289,6 +297,9 @@ public class Expression implements Serializable {
 			if (resolveFirstIds.contains(expr.id)) {
 				getResolveFirstList().add(expr);
 			}
+			if (callerId != null && callerId != -1 && Objects.equals(expr.id, callerId)) {
+				caller = expr;
+			}
 		}
 
 		//recover deducedTypeFunctionsId
@@ -461,6 +472,9 @@ public class Expression implements Serializable {
 		if (funcs.size() == 1) {
 			setType(func.getType(), func, bindingResolver);
 			setReferredEntity(func);
+			if (func instanceof FunctionEntity functionEntity) {
+				functionEntity.resolveFunctionCallType(this, bindingResolver);
+			}
 			return;
 		}
 		MultiDeclareEntities m = new MultiDeclareEntities(func, bindingResolver.getRepo().generateId());
@@ -761,5 +775,14 @@ public class Expression implements Serializable {
 		}
 		resolveFirstList.add(expression);
 		resolveFirstIds.add(expression.id);
+	}
+
+	public @Nullable Expression getCaller() {
+		return caller;
+	}
+
+	public void setCaller(@NotNull Expression caller) {
+		this.caller = caller;
+		this.callerId = caller.id;
 	}
 }

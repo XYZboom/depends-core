@@ -54,7 +54,9 @@ public class FunctionEntity extends ContainerEntity {
 		VarEntity firstParam = getParameters().get(0);
 		if (firstParam == null) return false;
 		TypeEntity firstParamType = firstParam.getType();
-		return firstParamType != null && firstParamType.isTypeParent(entity, false);
+		return (firstParamType != null &&
+				firstParamType.isTypeParent(entity, false))
+				|| isGenericTypeParameter(firstParam.getRawType());
 	}
 
 	public FunctionEntity() {
@@ -208,10 +210,17 @@ public class FunctionEntity extends ContainerEntity {
 						));
 			}
 		}
-		if (parameterSize == expression.getCallParameters().size()) {
+		ArrayList<Expression> callParameters = new ArrayList<>(expression.getCallParameters());
+		if (isExtension()) {
+			Expression caller = expression.getCaller();
+			if (caller != null) {
+				callParameters.add(0, caller);
+			}
+		}
+		if (parameterSize == callParameters.size()) {
 			for (int i = 0; i < parameterSize; i++) {
 				GenericName needTypeRawName = getParameters().get(i).getRawType();
-				Expression parameterExpression = expression.getCallParameters().get(i);
+				Expression parameterExpression = callParameters.get(i);
 				TypeEntity parameterExpressionType = parameterExpression.getType();
 				if (!genericArgsMatch && isGenericTypeParameter(needTypeRawName)) {
 					genericTypeInfer.put(needTypeRawName, parameterExpressionType);
