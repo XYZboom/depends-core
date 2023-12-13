@@ -2,9 +2,7 @@ package depends.utils;
 
 import com.google.common.graph.Graph;
 
-import java.util.LinkedList;
-import java.util.Map;
-import java.util.Queue;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -20,7 +18,25 @@ public class GraphUtils {
 			Consumer<T> function,
 			Consumer<T> otherNodesFunction
 	) {
-		Queue<T> queue = new LinkedList<>();
+		topologyTraverse(graph, function, otherNodesFunction, null);
+	}
+
+	/**
+	 * Perform topology traversal on the given graph<br>
+	 * 对所给的图进行拓扑遍历
+	 *
+	 * @param otherNodesFunction Traverse function for nodes that have not been traversed by {@code function}
+	 * @param nodeComparator Comparator of node 节点比较器
+	 */
+	public static <T> void topologyTraverse(
+			Graph<T> graph,
+			Consumer<T> function,
+			Consumer<T> otherNodesFunction,
+			Comparator<T> nodeComparator) {
+		if (nodeComparator == null) {
+			nodeComparator = Comparator.comparing(Objects::hashCode);
+		}
+		Queue<T> queue = new PriorityQueue<>(32, nodeComparator);
 		graph.nodes().stream()
 				.filter(task -> graph.inDegree(task) == 0)
 				.forEach(queue::add);

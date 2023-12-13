@@ -196,7 +196,12 @@ public abstract class ContainerEntity extends DecoratedEntity implements IExtens
 				expression -> {
 					logger.warn("expression: '{}' has cycle dependency when resolving!", expression);
 					expression.resolve(bindingResolver);
-				});
+				},
+				// When there is no dependency relationship in the expression,
+				// the default should be to resolve the expression that was added first
+				// 在表达式没有依赖关系时，默认应当是先加入的表达式先解析
+				Comparator.comparing(expression -> expressionList.indexOf(expression)
+				));
 	}
 
 	public void cacheChildExpressions() {
