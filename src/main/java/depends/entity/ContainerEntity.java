@@ -24,9 +24,13 @@ SOFTWARE.
 
 package depends.entity;
 
+import com.google.common.graph.GraphBuilder;
+import com.google.common.graph.MutableGraph;
+import depends.entity.intf.IExtensionContainer;
 import depends.entity.repo.EntityRepo;
 import depends.relations.IBindingResolver;
 import depends.relations.Relation;
+import depends.utils.GraphUtils;
 import multilang.depends.util.file.TemporaryFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -175,20 +179,24 @@ public abstract class ContainerEntity extends DecoratedEntity implements IExtens
 		if (expressionList == null) return;
 		if (expressionList.size() > 10000) return;
 
-		ArrayDeque<Expression> expressionsNeedResolveAgain = new ArrayDeque<>();
+		MutableGraph<Expression> expressionGraph =
+				GraphBuilder.directed()
+						.expectedNodeCount(expressionCount)
+						.build();
+
 		for (Expression expression : expressionList) {
-			if (expression.resolve(bindingResolver)) {
-				expressionsNeedResolveAgain.addLast(expression);
-			} else {
-				expression.resolved = true;
+			expressionGraph.addNode(expression);
+			for (Expression resolveFirst : expression.getResolveFirstList()) {
+				if (expression != resolveFirst)
+					expressionGraph.putEdge(resolveFirst, expression);
 			}
 		}
-		while (!expressionsNeedResolveAgain.isEmpty()) {
-			Expression expression = expressionsNeedResolveAgain.removeFirst();
-			if (expression.resolve(bindingResolver)) {
-				expressionsNeedResolveAgain.addLast(expression);
-			}
-		}
+		GraphUtils.topologyTraverse(expressionGraph,
+				expression -> expression.resolve(bindingResolver),
+				expression -> {
+					logger.warn("expression: '{}' has cycle dependency when resolving!", expression);
+					expression.resolve(bindingResolver);
+				});
 	}
 
 	public void cacheChildExpressions() {

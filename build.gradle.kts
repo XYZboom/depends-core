@@ -55,6 +55,7 @@ repositories {
 }
 
 dependencies {
+    implementation("com.google.guava:guava:31.1-jre")
     implementation("org.jetbrains:annotations:24.0.1")
     implementation("org.antlr:antlr4-runtime:4.13.1")
     implementation("cn.emergentdesign.se:utils:0.1.1")

@@ -26,6 +26,7 @@ package depends.relations;
 
 import depends.deptypes.DependencyType;
 import depends.entity.*;
+import depends.entity.intf.IDelegateProviderType;
 import depends.entity.repo.EntityRepo;
 import depends.extractor.AbstractLangProcessor;
 

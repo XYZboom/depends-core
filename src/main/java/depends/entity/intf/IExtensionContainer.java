@@ -1,5 +1,8 @@
-package depends.entity;
+package depends.entity.intf;
 
+import depends.entity.FunctionEntity;
+import depends.entity.GenericName;
+import depends.entity.TypeEntity;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

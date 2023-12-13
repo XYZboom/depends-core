@@ -27,6 +27,7 @@ package depends.entity;
 import depends.entity.repo.EntityRepo;
 import depends.relations.IBindingResolver;
 import org.apache.commons.codec.binary.StringUtils;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.Serializable;
@@ -36,7 +37,7 @@ import java.util.*;
  * Expression
  */
 public class Expression implements Serializable {
-	private static final long serialVersionUID = 5L;
+	private static final long serialVersionUID = 6L;
 
 	public Integer id;
 	private String text;                // not only for debug purpose but also for kotlin expression call deduce
@@ -110,28 +111,30 @@ public class Expression implements Serializable {
 
 	private Map<GenericName, Integer> genericTypeInferId;
 
-	protected boolean resolved = false;
+	private transient List<Expression> resolveFirstList;
+
+	private final List<Integer> resolveFirstIds = new ArrayList<>();
 
 	/**
 	 * @return true if the expression need resolve again
 	 */
-	public boolean resolve(IBindingResolver bindingResolver) {
+	public void resolve(IBindingResolver bindingResolver) {
 		// 1. if expression's type existed, break;
 		if (getType() != null)
-			return false;
+			return;
 		if (isDot()) { // wait for previous
 			// this expression resolved in previous' deduceParentType call
-			return false;
+			return;
 		}
 		if (getRawType() == null && getIdentifier() == null)
-			return false;
+			return;
 
 		// 2. if expression's rawType existed, directly infer type by rawType
 		// if expression's rawType does not existed, infer type based on identifiers
 		if (getRawType() != null) {
 			setType(bindingResolver.inferTypeFromName(getContainer(), getRawType()), null, bindingResolver);
 			if (getType() != null) {
-				return false;
+				return;
 			}
 		}
 		if (getIdentifier() != null) {
@@ -151,9 +154,6 @@ public class Expression implements Serializable {
 			if (entity != null) {
 				TypeEntity entityType = entity.getType();
 				if (entity instanceof FunctionEntity function) {
-					if (getCallParameters().stream().anyMatch(it -> !it.resolved)) {
-						return true;
-					}
 					entityType = function.resolveFunctionCallType(this, bindingResolver);
 				}
 				if (bindingResolver.isDelayHandleCreateExpression() &&
@@ -164,7 +164,7 @@ public class Expression implements Serializable {
 					setCall(false);
 				}
 				setType(entityType, entity, bindingResolver);
-				return false;
+				return;
 			}
 			TypeEntity context = getContext();
 			if (context != null) {
@@ -173,21 +173,15 @@ public class Expression implements Serializable {
 				if (contextResult != null) {
 					TypeEntity contextResultType = contextResult.getType();
 					if (contextResult instanceof FunctionEntity contextFunction) {
-						if (getCallParameters().stream().anyMatch(it -> !it.resolved)) {
-							return true;
-						}
 						contextResultType = contextFunction.resolveFunctionCallType(this, bindingResolver);
 					}
 					if (contextResultType != null) {
 						setType(contextResultType, contextResult, bindingResolver);
-						return false;
+						return;
 					}
 				}
 			}
 			if (isCall()) {
-				if (getCallParameters().stream().anyMatch(it -> !it.resolved)) {
-					return true;
-				}
 				List<Entity> contextFuncs = new ArrayList<>();
 				if (context != null) {
 					contextFuncs.addAll(context.lookupFunctionInVisibleScope(getIdentifier()));
@@ -225,7 +219,6 @@ public class Expression implements Serializable {
 				}
 			}
 		}
-		return false;
 	}
 
 	public ContainerEntity getContainer() {
@@ -292,6 +285,9 @@ public class Expression implements Serializable {
 			}
 			if (callParameterIds.contains(expr.id)) {
 				getCallParameters().add(expr);
+			}
+			if (resolveFirstIds.contains(expr.id)) {
+				getResolveFirstList().add(expr);
 			}
 		}
 
@@ -711,6 +707,9 @@ public class Expression implements Serializable {
 	}
 
 	public void addCallParameter(Expression expression) {
+		if (callParameters == null) {
+			callParameters = new ArrayList<>();
+		}
 		callParameters.add(expression);
 		callParameterIds.add(expression.id);
 	}
@@ -747,5 +746,20 @@ public class Expression implements Serializable {
 				genericTypeInferId.put(entry.getKey(), value.getId());
 			}
 		}
+	}
+
+	public @NotNull List<Expression> getResolveFirstList() {
+		if (resolveFirstList == null) {
+			resolveFirstList = new ArrayList<>();
+		}
+		return resolveFirstList;
+	}
+
+	public void addResolveFirst(Expression expression) {
+		if (resolveFirstList == null) {
+			resolveFirstList = new ArrayList<>();
+		}
+		resolveFirstList.add(expression);
+		resolveFirstIds.add(expression.id);
 	}
 }
