@@ -184,6 +184,23 @@ public abstract class Entity {
 	}
 
 	/**
+	 * Get ancestor of type.
+	 *
+	 * @param classType
+	 * @return null (if not exist) or the type
+	 */
+	public Entity getAncestorOfTypeInstance(Class<? extends Entity> classType) {
+		Entity fromEntity = this;
+		while (fromEntity != null) {
+			if (classType.isInstance(fromEntity))
+				return fromEntity;
+			if (fromEntity.getParent() == null) return null;
+			fromEntity = fromEntity.getParent();
+		}
+		return null;
+	}
+
+	/**
 	 * Invoke inferer to resolve the entity type etc.
 	 */
 	public void inferEntities(IBindingResolver bindingResolver) {

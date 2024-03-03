@@ -1,6 +1,7 @@
 plugins {
     id("java")
     id("maven-publish")
+    application
 }
 
 group = "cn.emergentdesign.se"
@@ -47,6 +48,7 @@ publishing {
 }
 
 repositories {
+    mavenLocal()
     maven {
         url = uri("http://47.115.213.131:8080/repository/alex-release/")
         isAllowInsecureProtocol = true
@@ -66,9 +68,15 @@ dependencies {
     implementation("org.codehaus.plexus:plexus-utils:3.5.1")
     implementation("net.sf.ehcache:ehcache-core:2.6.11")
     implementation("com.fasterxml.jackson.core:jackson-databind:2.15.1")
+    runtimeOnly("cn.emergentdesign.se:depends-java:0.9.8-SNAPSHOT")
+    runtimeOnly("cn.emergentdesign.se:depends-kotlin:1.0.0-SNAPSHOT")
     testImplementation("junit:junit:4.13.2")
 }
 
 tasks.getByName<Test>("test") {
     useJUnit()
+}
+
+application {
+    mainClass.set("depends.Main")
 }
