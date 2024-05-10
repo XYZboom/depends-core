@@ -5,7 +5,7 @@ plugins {
 }
 
 group = "com.github.XYZboom"
-version = "1.0.0-alpha2"
+version = "1.0.0-alpha3"
 
 java {
     sourceCompatibility = JavaVersion.VERSION_17
@@ -19,14 +19,14 @@ publishing {
         create<MavenPublication>("depend-core") {
             groupId = "com.github.XYZboom"
             artifactId = "depends-core"
-            version = "1.0.0-alpha2"
+            version = "1.0.0-alpha3"
 
             from(components["java"])
         }
         create<MavenPublication>("depend-core-source") {
             groupId = "com.github.XYZboom"
             artifactId = "depends-core"
-            version = "1.0.0-alpha2"
+            version = "1.0.0-alpha3"
 
             // 配置要上传的源码
             artifact(tasks.register<Jar>("sourcesJar") {
