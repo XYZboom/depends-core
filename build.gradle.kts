@@ -1,16 +1,43 @@
 plugins {
     id("java")
     application
+    `maven-publish`
 }
 
-group = "cn.emergentdesign.se"
-version = "0.9.8-SNAPSHOT"
+group = "com.github.XYZboom"
+version = "1.0.0-alpha0"
 
 java {
     sourceCompatibility = JavaVersion.VERSION_17
     targetCompatibility = JavaVersion.VERSION_17
 }
+publishing {
+    repositories {
+        mavenLocal()
+    }
+    publications {
+        create<MavenPublication>("depend-core") {
+            groupId = "com.github.XYZboom"
+            artifactId = "depends-core"
+            version = "1.0.0-alpha0"
 
+            from(components["java"])
+        }
+        create<MavenPublication>("depend-core-source") {
+            groupId = "com.github.XYZboom"
+            artifactId = "depends-core"
+            version = "1.0.0-alpha0"
+
+            // 配置要上传的源码
+            artifact(tasks.register<Jar>("sourcesJar") {
+                from(sourceSets.main.get().allSource)
+                archiveClassifier.set("sources")
+            }) {
+                classifier = "sources"
+            }
+        }
+    }
+}
 repositories {
     mavenLocal()
     mavenCentral()
