@@ -182,8 +182,7 @@ public class BindingResolver implements IBindingResolver{
 	
 	private Entity lookupEntity(Entity fromEntity, String name, boolean searchImport) {
 		if (name.equals("this") || name.equals("class") ) {
-			TypeEntity entityType = (TypeEntity) (fromEntity.getAncestorOfType(TypeEntity.class));
-			return entityType;
+			return fromEntity.getAncestorOfTypeInstance(TypeEntity.class);
 		} else if (name.equals("super")) {
 			TypeEntity parent = (TypeEntity) (fromEntity.getAncestorOfType(TypeEntity.class));
 			if (parent != null) {

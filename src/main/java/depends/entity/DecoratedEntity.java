@@ -144,8 +144,12 @@ public abstract class DecoratedEntity extends Entity{
 	private Entity resolveEntity(IBindingResolver bindingResolver, GenericName name) {
 		Entity entity = bindingResolver.resolveName(this, name, true);
 		if (entity==null) {
-			if (((ContainerEntity)getParent()).isGenericTypeParameter(name)) {
-				entity = TypeEntity.genericParameterType;
+			Entity parent = getParent();
+			if (parent == null) return null;
+			if (parent instanceof ContainerEntity containerEntity) {
+				if (containerEntity.isGenericTypeParameter(name)) {
+					entity = TypeEntity.genericParameterType;
+				}
 			}
 		}
 		return entity;

@@ -24,9 +24,13 @@ SOFTWARE.
 
 package depends.entity;
 
+import com.google.common.graph.GraphBuilder;
+import com.google.common.graph.MutableGraph;
+import depends.entity.intf.IExtensionContainer;
 import depends.entity.repo.EntityRepo;
 import depends.relations.IBindingResolver;
 import depends.relations.Relation;
+import depends.utils.GraphUtils;
 import multilang.depends.util.file.TemporaryFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -175,20 +179,29 @@ public abstract class ContainerEntity extends DecoratedEntity implements IExtens
 		if (expressionList == null) return;
 		if (expressionList.size() > 10000) return;
 
-		ArrayDeque<Expression> expressionsNeedResolveAgain = new ArrayDeque<>();
+		MutableGraph<Expression> expressionGraph =
+				GraphBuilder.directed()
+						.expectedNodeCount(expressionCount)
+						.build();
+
 		for (Expression expression : expressionList) {
-			if (expression.resolve(bindingResolver)) {
-				expressionsNeedResolveAgain.addLast(expression);
-			} else {
-				expression.resolved = true;
+			expressionGraph.addNode(expression);
+			for (Expression resolveFirst : expression.getResolveFirstList()) {
+				if (expression != resolveFirst)
+					expressionGraph.putEdge(resolveFirst, expression);
 			}
 		}
-		while (!expressionsNeedResolveAgain.isEmpty()) {
-			Expression expression = expressionsNeedResolveAgain.removeFirst();
-			if (expression.resolve(bindingResolver)) {
-				expressionsNeedResolveAgain.addLast(expression);
-			}
-		}
+		GraphUtils.topologyTraverse(expressionGraph,
+				expression -> expression.resolve(bindingResolver),
+				expression -> {
+					logger.warn("expression: '{}' has cycle dependency when resolving!", expression);
+					expression.resolve(bindingResolver);
+				},
+				// When there is no dependency relationship in the expression,
+				// the default should be to resolve the expression that was added first
+				// 在表达式没有依赖关系时，默认应当是先加入的表达式先解析
+				Comparator.comparing(expression -> expressionList.indexOf(expression)
+				));
 	}
 
 	public void cacheChildExpressions() {
