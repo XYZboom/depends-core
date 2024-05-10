@@ -5,7 +5,7 @@ plugins {
 }
 
 group = "com.github.XYZboom"
-version = "1.0.0-alpha4"
+version = "1.0.0-alpha6"
 
 java {
     sourceCompatibility = JavaVersion.VERSION_17
@@ -19,14 +19,14 @@ publishing {
         create<MavenPublication>("depend-core") {
             groupId = "com.github.XYZboom"
             artifactId = "depends-core"
-            version = "1.0.0-alpha4"
+            version = "1.0.0-alpha6"
 
             from(components["java"])
         }
         create<MavenPublication>("depend-core-source") {
             groupId = "com.github.XYZboom"
             artifactId = "depends-core"
-            version = "1.0.0-alpha4"
+            version = "1.0.0-alpha6"
 
             // 配置要上传的源码
             artifact(tasks.register<Jar>("sourcesJar") {
@@ -56,8 +56,8 @@ dependencies {
     implementation("org.codehaus.plexus:plexus-utils:3.5.1")
     implementation("net.sf.ehcache:ehcache-core:2.6.11")
     implementation("com.fasterxml.jackson.core:jackson-databind:2.15.1")
-    runtimeOnly("com.github.XYZboom:depends-java:1.0.0-alpha1")
-    runtimeOnly("com.github.XYZboom:depends-kotlin:v1.0.0-alpha0")
+//    runtimeOnly("com.github.XYZboom:depends-java:1.0.0-alpha1")
+//    runtimeOnly("com.github.XYZboom:depends-kotlin:v1.0.0-alpha0")
     testImplementation("junit:junit:4.13.2")
 }
 
