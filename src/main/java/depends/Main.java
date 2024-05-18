@@ -25,6 +25,8 @@ SOFTWARE.
 package depends;
 
 import depends.addons.DV8MappingFileBuilder;
+import depends.deptypes.DependencyType;
+import depends.entity.*;
 import depends.entity.repo.EntityRepo;
 import depends.extractor.AbstractLangProcessor;
 import depends.extractor.LangProcessorRegistration;
@@ -34,6 +36,7 @@ import depends.format.detail.UnsolvedSymbolDumper;
 import depends.generator.*;
 import depends.matrix.core.DependencyMatrix;
 import depends.relations.IBindingResolver;
+import depends.relations.Relation;
 import depends.relations.RelationCounter;
 import multilang.depends.util.file.FileUtil;
 import multilang.depends.util.file.FolderCollector;
@@ -42,19 +45,21 @@ import multilang.depends.util.file.path.*;
 import multilang.depends.util.file.strip.LeadingNameStripper;
 import net.sf.ehcache.CacheManager;
 import org.codehaus.plexus.util.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
 import picocli.CommandLine.PicocliException;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * The entry pooint of depends
  */
 public class Main {
+
+	private final static Logger logger = LoggerFactory.getLogger(Main.class);
 
 	public static void main(String[] args) {
 		try {
@@ -114,9 +119,9 @@ public class Main {
 		long startTime = System.currentTimeMillis();
 		//step1: build data
 		EntityRepo entityRepo = langProcessor.buildDependencies(inputDir, includeDir, bindingResolver);
-
 		new RelationCounter(entityRepo, langProcessor, bindingResolver).computeRelations();
 		System.out.println("Dependency done....");
+		logDependencyInfo(entityRepo);
 
 		//step2: generate dependencies matrix
 		List<DependencyGenerator> dependencyGenerators = getDependencyGenerators(args, inputDir);
@@ -140,6 +145,46 @@ public class Main {
 		if (args.isDv8map()) {
 			DV8MappingFileBuilder dv8MapfileBuilder = new DV8MappingFileBuilder(langProcessor.supportedRelations());
 			dv8MapfileBuilder.create(outputDir + File.separator + "depends-dv8map.mapping");
+		}
+	}
+
+	private static void logDependencyInfo(EntityRepo entityRepo) {
+		int packageCount = 0;
+		int fileCount = 0;
+		int methodCount = 0;
+		int classCount = 0;
+		int varCount = 0;
+		Iterator<Entity> entityIterator = entityRepo.entityIterator();
+		ArrayList<String> strings = DependencyType.allDependencies();
+		Map<String, Integer> dependencyCount = strings.stream().collect(Collectors.toMap(key -> key, value -> 0));
+		while (entityIterator.hasNext()) {
+			Entity entity = entityIterator.next();
+			if (entity instanceof PackageEntity) {
+				packageCount++;
+			} else if (entity instanceof FileEntity) {
+				fileCount++;
+			} else if (entity instanceof FunctionEntity) {
+				methodCount++;
+			} else if (entity instanceof TypeEntity) {
+				classCount++;
+			} else if (entity instanceof VarEntity) {
+				varCount++;
+			}
+			ArrayList<Relation> relations = entity.getRelations();
+			for (Relation relation : relations) {
+				String relationType = relation.getType();
+				if (dependencyCount.containsKey(relationType)) {
+					dependencyCount.put(relationType, dependencyCount.get(relationType) + 1);
+				}
+			}
+		}
+		logger.info("Packages: {}", packageCount);
+		logger.info("Files: {}", fileCount);
+		logger.info("Classes: {}", classCount);
+		logger.info("Methods: {}", methodCount);
+		logger.info("Vars: {}", varCount);
+		for (Map.Entry<String,Integer> entry : dependencyCount.entrySet()) {
+			logger.info("{}: {}", entry.getKey(), entry.getValue());
 		}
 	}
 
