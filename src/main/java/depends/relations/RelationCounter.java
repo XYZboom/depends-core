@@ -53,28 +53,6 @@ public class RelationCounter {
 
 	public void computeRelations() {
 		entities.forEach(this::computeRelationOf);
-		repo.entityIterator().forEachRemaining(this::computeKotlinAndJavaRelationOf);
-	}
-
-	private void computeKotlinAndJavaRelationOf(Entity entity) {
-		ArrayList<Relation> relations = entity.getRelations();
-		ArrayList<Relation> newRelations = new ArrayList<>(relations.size());
-		for (Relation relation : relations) {
-			Entity relationEntity = relation.getEntity();
-			Entity relationFile = relationEntity.getAncestorOfTypeInstance(FileEntity.class);
-			Entity myFile = entity.getAncestorOfTypeInstance(FileEntity.class);
-			if (myFile == null || relationFile == null) {
-				continue;
-			}
-			if (myFile.getQualifiedName().endsWith(".kt")
-					&& relationFile.getQualifiedName().endsWith(".java")) {
-				newRelations.add(buildRelation(entity, DependencyType.KDependsOnJ, relationEntity, false));
-			} else if (myFile.getQualifiedName().endsWith(".java")
-					&& relationFile.getQualifiedName().endsWith(".kt")) {
-				newRelations.add(buildRelation(entity, DependencyType.JDependsOnK, relationEntity, false));
-			}
-		}
-		relations.addAll(newRelations);
 	}
 
 	private void computeRelationOf(Entity entity) {

@@ -36,69 +36,63 @@ import static depends.deptypes.DependencyType.POSSIBLE_DEP;
 public class DependencyMatrix {
 	private final boolean outputSelfDependencies;
 	private HashMap<String, DependencyPair> dependencyPairs = new HashMap<>();
-    private ArrayList<String> nodes = new ArrayList<>();
-    private HashMap<Integer,String> nodeIdToName = new HashMap<>();
-	private List<String> typeFilter;
+	private ArrayList<String> nodes = new ArrayList<>();
+	private HashMap<Integer, String> nodeIdToName = new HashMap<>();
 
-	public DependencyMatrix(int size, List<String> typeFilter,boolean outputSelfDependencies) {
+	public DependencyMatrix(int size, boolean outputSelfDependencies) {
 		dependencyPairs = new HashMap<>(size);
-		this.typeFilter = typeFilter;
 		this.outputSelfDependencies = outputSelfDependencies;
 	}
 
 	public Collection<DependencyPair> getDependencyPairs() {
-        return dependencyPairs.values();
-    }
+		return dependencyPairs.values();
+	}
 
 	public void addNode(String name, int id) {
 		this.nodes.add(name);
 		this.nodeIdToName.put(id, name);
 	}
-	
-	public void addDependency(String depType, Integer from, Integer to,  int weight,List<DependencyDetail> details) {
-		if (typeFilter!=null && (!typeFilter.contains(depType)))
-			return;
-		if (!outputSelfDependencies && from.equals(to) ){
+
+	public void addDependency(String depType, Integer from, Integer to, int weight, List<DependencyDetail> details) {
+		if (!outputSelfDependencies && from.equals(to)) {
 			return;
 		}
-		if( from == -1 || to == -1) {
-		    return;
+		if (from == -1 || to == -1) {
+			return;
 		}
-		if (dependencyPairs.get(DependencyPair.key(from,to))==null) {
-			dependencyPairs.put(DependencyPair.key(from,to),new DependencyPair(from,to));
+		if (dependencyPairs.get(DependencyPair.key(from, to)) == null) {
+			dependencyPairs.put(DependencyPair.key(from, to), new DependencyPair(from, to));
 		}
-		DependencyPair dependencyPair = dependencyPairs.get(DependencyPair.key(from,to));
-		dependencyPair.addDependency(depType,weight,details);
+		DependencyPair dependencyPair = dependencyPairs.get(DependencyPair.key(from, to));
+		dependencyPair.addDependency(depType, weight, details);
 	}
-	
-	public void addDependency(String depType, Integer from, Integer to,  int weight,DependencyDetail detail) {
-		if (typeFilter!=null && (!typeFilter.contains(depType.replace(POSSIBLE_DEP,""))))
-			return;
-		if (!outputSelfDependencies && from.equals(to) ){
+
+	public void addDependency(String depType, Integer from, Integer to, int weight, DependencyDetail detail) {
+		if (!outputSelfDependencies && from.equals(to)) {
 			return;
 		}
-		if( from == -1 || to == -1) {
+		if (from == -1 || to == -1) {
 			return;
 		}
-		if (dependencyPairs.get(DependencyPair.key(from,to))==null) {
-			dependencyPairs.put(DependencyPair.key(from,to),new DependencyPair(from,to));
+		if (dependencyPairs.get(DependencyPair.key(from, to)) == null) {
+			dependencyPairs.put(DependencyPair.key(from, to), new DependencyPair(from, to));
 		}
-		DependencyPair dependencyPair = dependencyPairs.get(DependencyPair.key(from,to));
-		dependencyPair.addDependency(depType,weight,detail);
+		DependencyPair dependencyPair = dependencyPairs.get(DependencyPair.key(from, to));
+		dependencyPair.addDependency(depType, weight, detail);
 	}
-	
-    public ArrayList<String> getNodes() {
+
+	public ArrayList<String> getNodes() {
 		return nodes;
 	}
 
 
 	public DependencyMatrix reWriteFilenamePattern(FilenameWritter filenameRewritter) {
 		this.nodeIdToName = new HashMap<>();
-		for (int i=0;i<nodes.size();i++) {
+		for (int i = 0; i < nodes.size(); i++) {
 			String name = filenameRewritter.reWrite(nodes.get(i));
-			nodes.set(i, name );
+			nodes.set(i, name);
 			nodeIdToName.put(i, name);
-		}		
+		}
 		return this;
 	}
 
@@ -106,7 +100,7 @@ public class DependencyMatrix {
 		return nodeIdToName.get(key);
 	}
 
-	public boolean isOutputSelfDependencies(){
+	public boolean isOutputSelfDependencies() {
 		return outputSelfDependencies;
 	}
 }

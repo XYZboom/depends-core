@@ -25,7 +25,6 @@ SOFTWARE.
 package depends.matrix.transform;
 
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.HashMap;
 
 import depends.matrix.core.DependencyMatrix;
@@ -89,7 +88,7 @@ public class MatrixLevelReducer {
 		}
 		// sort nodes by name
 		reMappedNodes.sort((o1, o2) -> o1.compareTo(o2));
-	    DependencyMatrix ordered = new DependencyMatrix(0,null,false);
+	    DependencyMatrix ordered = new DependencyMatrix(0, false);
 		for (int id=0;id<reMappedNodes.size();id++) {
 			nodesMap.put(reMappedNodes.get(id), id);
 			ordered.addNode(reMappedNodes.get(id), id);

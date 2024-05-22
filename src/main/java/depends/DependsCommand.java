@@ -84,6 +84,14 @@ public class DependsCommand {
 	private boolean outputSelfDependencies = false;
 	@Option(names = {"-h","--help"}, usageHelp = true, description = "display this help and exit")
     boolean help;
+
+	public boolean isShowLanguage() {
+		return showLanguage;
+	}
+
+	@Option(names = {"--show-language"}, description = "Show language info in dependency type")
+	boolean showLanguage;
+
 	public DependsCommand() {
 	}
 	public String getLang() {

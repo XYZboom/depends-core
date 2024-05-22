@@ -34,6 +34,7 @@ import depends.matrix.core.DependencyMatrix;
 import depends.matrix.core.LocationInfo;
 import depends.matrix.transform.OrderedMatrixGenerator;
 import depends.relations.Relation;
+import depends.utils.EntityUtils;
 import multilang.depends.util.file.path.EmptyFilenameWritter;
 import multilang.depends.util.file.path.FilenameWritter;
 import multilang.depends.util.file.strip.EmptyLeadingNameStripper;
@@ -54,9 +55,10 @@ public abstract class DependencyGenerator {
 	private boolean outputSelfDependencies;
 
 	public abstract String getType();
-	public DependencyMatrix identifyDependencies(EntityRepo entityRepo, List<String> typeFilter) {
+
+	public DependencyMatrix identifyDependencies(EntityRepo entityRepo, List<String> typeFilter, boolean showLanguage) {
 		System.out.println("dependencie data generating...");
-		DependencyMatrix dependencyMatrix = build(entityRepo, typeFilter);
+		DependencyMatrix dependencyMatrix = build(entityRepo, typeFilter, showLanguage);
 		System.out.println("reorder dependency matrix...");
 		dependencyMatrix = new OrderedMatrixGenerator(dependencyMatrix).build();
 		System.out.println("Dependencies data generating done successfully...");
@@ -66,33 +68,50 @@ public abstract class DependencyGenerator {
 
 	/**
 	 * Build the dependency matrix (without re-mapping file id)
+	 *
 	 * @param entityRepo which contains entities and relations
 	 * @return the generated dependency matrix
 	 */
-	public DependencyMatrix build(EntityRepo entityRepo,List<String> typeFilter) {
-		DependencyMatrix dependencyMatrix = new DependencyMatrix(0, typeFilter,outputSelfDependencies);
+	public DependencyMatrix build(EntityRepo entityRepo, List<String> typeFilter, boolean showLanguage) {
+		DependencyMatrix dependencyMatrix = new DependencyMatrix(0, outputSelfDependencies);
 		Iterator<Entity> iterator = entityRepo.entityIterator();
 		System.out.println("Start create dependencies matrix....");
-		while(iterator.hasNext()) {
+		while (iterator.hasNext()) {
 			Entity entity = iterator.next();
 			if (!entity.inScope()) continue;
-			if (outputLevelMatch(entity)){
-				dependencyMatrix.addNode(nameOf(entity),entity.getId());
+			if (outputLevelMatch(entity)) {
+				dependencyMatrix.addNode(nameOf(entity), entity.getId());
 			}
 			int entityFrom = upToOutputLevelEntityId(entityRepo, entity);
-			if (entityFrom==-1) continue;
-			for (Relation relation:entity.getRelations()) {
+			if (entityFrom == -1) continue;
+			for (Relation relation : entity.getRelations()) {
 				Entity relatedEntity = relation.getEntity();
-				if (relatedEntity==null) continue;
+				if (relatedEntity == null) continue;
 				List<Entity> relatedEntities = expandEntity(relatedEntity);
-				String possibleDependencyFlag = relation.possible()? POSSIBLE_DEP :"";
-				relatedEntities.forEach(theEntity->{
-					if (theEntity.getId()>=0) {
-						int entityTo = upToOutputLevelEntityId(entityRepo,theEntity);
-						if (entityTo!=-1) {
+				String possibleDependencyFlag = relation.possible() ? POSSIBLE_DEP : "";
+				relatedEntities.forEach(theEntity -> {
+					if (theEntity.getId() >= 0) {
+						int entityTo = upToOutputLevelEntityId(entityRepo, theEntity);
+						if (entityTo != -1) {
 							DependencyDetail detail = buildDescription(entity, theEntity, relation.getFromLine());
 							detail = rewriteDetail(detail);
-							dependencyMatrix.addDependency(relation.getType()+possibleDependencyFlag, entityFrom,entityTo,1,detail);
+							String type;
+							if (typeFilter != null && (!typeFilter.contains(relation.getType()))) {
+								return;
+							}
+							if (showLanguage) {
+								type = EntityUtils.getLanguage(entity) + " "
+										+ relation.getType() + " "
+										+ EntityUtils.getLanguage(theEntity)
+										+ possibleDependencyFlag;
+							} else {
+								type = relation.getType() + possibleDependencyFlag;
+							}
+							dependencyMatrix.addDependency(
+									type,
+									entityFrom,
+									entityTo,
+									1, detail);
 						}
 					}
 				});
@@ -106,14 +125,14 @@ public abstract class DependencyGenerator {
 		List<Entity> entities = new ArrayList<>();
 		if (relatedEntity instanceof CandidateTypes) {
 			entities = Collections.unmodifiableList((List) ((CandidateTypes) relatedEntity).getCandidateTypes());
-		}else {
+		} else {
 			entities.add(relatedEntity);
 		}
 		return entities;
 	}
 
 	private DependencyDetail rewriteDetail(DependencyDetail detail) {
-		if (detail==null) return null;
+		if (detail == null) return null;
 		String srcFile = filenameWritter.reWrite(
 				stripper.stripFilename(detail.getSrc().getFile())
 		);
@@ -138,7 +157,7 @@ public abstract class DependencyGenerator {
 	protected ILeadingNameStrippper stripper = new EmptyLeadingNameStripper();
 	protected FilenameWritter filenameWritter = new EmptyFilenameWritter();
 	private boolean generateDetail = false;
-	
+
 	public void setLeadingStripper(ILeadingNameStrippper stripper) {
 		this.stripper = stripper;
 	}
@@ -154,12 +173,12 @@ public abstract class DependencyGenerator {
 		if (toFile == null) return null;
 
 		return new DependencyDetail(
-				new LocationInfo(stripper.stripFilename(fromObject),typeOf(fromEntity),stripper.stripFilename(fromFile.getQualifiedName()),fromLineNumber),
-				new LocationInfo(stripper.stripFilename(toObject),typeOf(toEntity),stripper.stripFilename(toFile.getQualifiedName()),toEntity.getLine()));
+				new LocationInfo(stripper.stripFilename(fromObject), typeOf(fromEntity), stripper.stripFilename(fromFile.getQualifiedName()), fromLineNumber),
+				new LocationInfo(stripper.stripFilename(toObject), typeOf(toEntity), stripper.stripFilename(toFile.getQualifiedName()), toEntity.getLine()));
 	}
 
 	private String typeOf(Entity entity) {
-		return entity.getClass().getSimpleName().replace("Entity","").toLowerCase();
+		return entity.getClass().getSimpleName().replace("Entity", "").toLowerCase();
 	}
 
 	public void setFilenameRewritter(FilenameWritter filenameWritter) {

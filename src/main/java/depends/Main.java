@@ -126,7 +126,7 @@ public class Main {
 		//step2: generate dependencies matrix
 		List<DependencyGenerator> dependencyGenerators = getDependencyGenerators(args, inputDir);
 		for (DependencyGenerator dependencyGenerator : dependencyGenerators) {
-			DependencyMatrix matrix = dependencyGenerator.identifyDependencies(entityRepo, args.getTypeFilter());
+			DependencyMatrix matrix = dependencyGenerator.identifyDependencies(entityRepo, args.getTypeFilter(), args.isShowLanguage());
 			DependencyDumper output = new DependencyDumper(matrix);
 			output.outputResult(outputName + "-" + dependencyGenerator.getType(), outputDir, outputFormat);
 		}
