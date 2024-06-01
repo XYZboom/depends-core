@@ -36,7 +36,7 @@ public class StructureDependencyGenerator extends DependencyGenerator{
 
 	@Override
 	protected boolean outputLevelMatch(Entity entity) {
-		if (entity instanceof FileEntity) return false;
+		if (entity instanceof FileEntity) return true;
 		if (entity instanceof TypeEntity) return true; //package included
 		if (entity instanceof VarEntity && entity.getParent() instanceof TypeEntity) return true;
 		if (entity instanceof FunctionEntity) return true;
