@@ -19,14 +19,14 @@ publishing {
         create<MavenPublication>("depend-core") {
             groupId = "com.github.XYZboom"
             artifactId = "depends-core"
-            version = "1.0.1-SNAPSHOT"
+            version = "1.0.1-alpha0"
 
             from(components["java"])
         }
         create<MavenPublication>("depend-core-source") {
             groupId = "com.github.XYZboom"
             artifactId = "depends-core"
-            version = "1.0.1-SNAPSHOT"
+            version = "1.0.1-alpha0"
 
             // 配置要上传的源码
             artifact(tasks.register<Jar>("sourcesJar") {
