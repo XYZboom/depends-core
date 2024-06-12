@@ -51,9 +51,6 @@ public class DependencyType {
 
 	public static final String POSSIBLE_DEP = "(possible)";
 
-	public static final String JDependsOnK = "JDependsOnK";
-	public static final String KDependsOnJ = "KDependsOnJ";
-
 	public static ArrayList<String> allDependencies() {
         ArrayList<String> depedencyTypes = new ArrayList<>();
 		depedencyTypes.add(IMPORT);
@@ -77,8 +74,6 @@ public class DependencyType {
 		depedencyTypes.add(PomParent);
 		depedencyTypes.add(PomPlugin);
 		depedencyTypes.add(PomDependency);
-		depedencyTypes.add(JDependsOnK);
-		depedencyTypes.add(KDependsOnJ);
 		return depedencyTypes;
 	}
 }

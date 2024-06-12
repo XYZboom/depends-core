@@ -24,11 +24,7 @@ SOFTWARE.
 
 package depends.format.json;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import depends.format.FileAttributes;
 import depends.matrix.core.DependencyDetail;
@@ -43,7 +39,11 @@ public class JDataBuilder {
 		ArrayList<JCellObject> cellObjects = buildCellObjects(dependencyPairs); // transform finalRes into cellObjects
 
 		JDepObject depObject = new JDepObject();
-		depObject.setVariables(files);
+		Map<Integer, String> filesWithIndex = new LinkedHashMap<>();
+		for (int i = 0; i < files.size(); i++) {
+			filesWithIndex.put(i, files.get(i));
+		}
+		depObject.setVariables(filesWithIndex);
 		depObject.setName(attribute.getAttributeName());
 		depObject.setSchemaVersion(attribute.getSchemaVersion());
 		depObject.setCells(cellObjects);

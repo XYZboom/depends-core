@@ -28,12 +28,13 @@ import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 import java.util.ArrayList;
+import java.util.Map;
 
 @XmlRootElement(name = "matrix")
 public class JDepObject {
     private String schemaVersion;
     private String name;
-    private ArrayList<String> variables;
+    private Map<Integer, String> variables;
     private ArrayList<JCellObject> cells;
 
     public String getName() {
@@ -54,12 +55,12 @@ public class JDepObject {
         this.schemaVersion = schemaVersion;
     }
 
-    public ArrayList<String> getVariables() {
+    public Map<Integer, String> getVariables() {
         return variables;
     }
 
     @XmlElement
-    public void setVariables(ArrayList<String> variables) {
+    public void setVariables(Map<Integer, String> variables) {
         this.variables = variables;
     }
 
